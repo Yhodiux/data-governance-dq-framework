@@ -151,6 +151,18 @@ def validate_run_record(document: Any, source: str) -> dict[str, Any]:
     if not isinstance(document["rule_results"], list):
         raise SourceRecordError(source, "rule_results must be a list")
 
+    has_data_zone = "data_zone" in document
+    has_data_path = "data_path" in document
+    if has_data_zone != has_data_path:
+        raise SourceRecordError(
+            source, "data_zone and data_path must either both be present or both be absent"
+        )
+    if has_data_zone:
+        require_nonempty_text(document, "data_zone", source)
+        require_nonempty_text(document, "data_path", source)
+        if document["data_zone"] not in {"raw", "trusted"}:
+            raise SourceRecordError(source, "data_zone must be raw or trusted")
+
     validated_results = [
         validate_rule_result(rule, source, index)
         for index, rule in enumerate(document["rule_results"])
@@ -214,7 +226,9 @@ def create_schema(connection: duckdb.DuckDBPyConnection) -> None:
             rules_passed BIGINT NOT NULL,
             rules_failed BIGINT NOT NULL,
             execution_error_count BIGINT NOT NULL,
-            source_record VARCHAR NOT NULL
+            source_record VARCHAR NOT NULL,
+            data_zone VARCHAR,
+            data_path VARCHAR
         )
         """
     )
@@ -255,7 +269,7 @@ def populate_database(
                     ?,
                     CAST(? AS TIMESTAMPTZ) AT TIME ZONE 'UTC',
                     CAST(? AS TIMESTAMPTZ) AT TIME ZONE 'UTC',
-                    ?, ?, ?, ?, ?, ?, ?
+                    ?, ?, ?, ?, ?, ?, ?, ?, ?
                 )
                 """,
                 [
@@ -269,6 +283,8 @@ def populate_database(
                     record["rules_failed"],
                     len(record["execution_errors"]),
                     source_record,
+                    record.get("data_zone"),
+                    record.get("data_path"),
                 ],
             )
             for rule in record["rule_results"]:

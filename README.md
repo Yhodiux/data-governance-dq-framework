@@ -66,6 +66,14 @@ python -m src.dq
 
 Each run writes a JSON result to `data/results/dq/`. A successful engine execution may contain failed rules when violations are observed. Empty-string handling is explicit per rule through `empty_policy`; completeness, thresholds, global scoring, remediation, and TRUSTED output are not implemented.
 
+RAW remains the default input. Revalidate the same rules against the separately produced TRUSTED dataset with:
+
+```bash
+python -m src.dq --data-path data/trusted --data-zone trusted
+```
+
+New DQ records include the explicit zone label and resolved physical path. Selecting TRUSTED changes only the input location and execution metadata; rule semantics are identical and DQ never transforms its input.
+
 ## Local DQ observability
 
 Step 4 rebuilds a queryable DuckDB history from the immutable DQ execution JSON records:
@@ -74,7 +82,7 @@ Step 4 rebuilds a queryable DuckDB history from the immutable DQ execution JSON 
 python -m src.observability
 ```
 
-The output is `data/results/observability/dq_history.duckdb`, containing `dq_runs` and `dq_rule_results`. Each build validates the complete JSON input set and publishes a full replacement atomically, so repeated builds do not duplicate rows. The builder does not rerun DQ or read RAW.
+The output is `data/results/observability/dq_history.duckdb`, containing `dq_runs` and `dq_rule_results`. Each build validates the complete JSON input set and publishes a full replacement atomically, so repeated builds do not duplicate rows. Zone-aware runs retain `data_zone` and `data_path`; legacy runs preserve these as unknown (`NULL`). The builder does not rerun DQ or read RAW.
 
 This is execution history, not a global DQ score or proof of improvement or deterioration. Repeated runs over unchanged RAW may naturally contain identical results.
 
@@ -118,6 +126,6 @@ These capabilities are planned and have not yet been implemented.
 
 ## Current status
 
-**Step 5 - Policy-Driven Standardization and TRUSTED.** The source baseline, local ingestion, physical profiling, catalog, metadata-driven DQ, run history, and one explicitly authorized standardization policy are implemented. Completeness, scoring, post-standardization DQ revalidation, broader governance decisions, replay, dashboards, and cloud components have not been implemented.
+**Step 5B - Post-Standardization DQ Revalidation.** The same metadata-driven DQ engine can validate RAW or TRUSTED explicitly, and observability preserves zone-aware and legacy execution history. Completeness, scoring, broader governance decisions, replay, dashboards, and cloud components have not been implemented.
 
 See [`docs/source/dataset_assessment.md`](docs/source/dataset_assessment.md) for the source baseline, [`config/dataset_manifest.yaml`](config/dataset_manifest.yaml) for expected files, [`docs/architecture/local_ingestion.md`](docs/architecture/local_ingestion.md) for ingestion, [`docs/architecture/local_profiling.md`](docs/architecture/local_profiling.md) for profiling, [`docs/architecture/metadata_catalog.md`](docs/architecture/metadata_catalog.md) for the catalog, [`docs/architecture/data_quality.md`](docs/architecture/data_quality.md) for DQ semantics, [`docs/architecture/dq_observability.md`](docs/architecture/dq_observability.md) for history, and [`docs/architecture/standardization_trusted.md`](docs/architecture/standardization_trusted.md) for TRUSTED publication.

@@ -2,9 +2,18 @@
 
 ## Purpose and boundaries
 
-Step 3 evaluates explicit Data Quality expectations declared in version-controlled YAML. Python orchestrates execution and DuckDB evaluates the rules against unchanged RAW files.
+The DQ engine evaluates explicit Data Quality expectations declared in version-controlled YAML. Python orchestrates execution and DuckDB evaluates the rules against an explicitly selected, unchanged data zone.
 
 Rules are metadata-driven so that expectations, scope, empty-value behavior, and evidence remain reviewable outside the engine. The Python implementation contains generic operators only; it does not contain Berka asset names or dataset-specific validation branches.
+
+RAW remains the default for backward-compatible execution. TRUSTED revalidation is explicit:
+
+```bash
+python -m src.dq
+python -m src.dq --data-path data/trusted --data-zone trusted
+```
+
+`data_path` selects the physical input and `data_zone` records its semantic label (`raw` or `trusted`). The engine does not infer the label from a directory name. Both zones use exactly the same rule files, metadata validation, operators, empty policies, and PASS/FAIL semantics; there is no TRUSTED-specific rule branch.
 
 Profiling and Data Quality remain distinct:
 
@@ -61,7 +70,9 @@ Rules use a strict zero-violation policy:
 
 No tolerances, warning level, weighting, or global score is applied. `compliance_ratio` is `(rows_evaluated - violations) / rows_evaluated`, or JSON `null` when no rows are evaluated.
 
-Execution status is separate from rule status. A run is `SUCCESS` when valid rules execute technically, even when one or more rules return `FAILED`. Invalid metadata, missing RAW files, parser failures, or operator failures produce execution status `FAILED` and a non-zero CLI exit code.
+Execution status is separate from rule status. A run is `SUCCESS` when valid rules execute technically, even when one or more rules return `FAILED`. Invalid metadata, missing data-zone files, parser failures, or operator failures produce execution status `FAILED` and a non-zero CLI exit code.
+
+New execution records include the explicit `data_zone` and resolved `data_path`. Historical records are never rewritten. Standardization and DQ revalidation remain separate commands: DQ reads its selected input without transforming it, and standardization does not invoke DQ automatically.
 
 ## Documented versus observed `card.issued`
 

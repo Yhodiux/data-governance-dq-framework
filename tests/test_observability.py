@@ -50,10 +50,12 @@ class ObservabilityTests(unittest.TestCase):
         run_id: str = "dq-run-001",
         status: str = "SUCCESS",
         rules: list[dict[str, object]] | None = None,
+        data_zone: str | None = None,
+        data_path: str | None = None,
     ) -> dict[str, object]:
         if rules is None:
             rules = [self.rule_result()]
-        return {
+        record = {
             "run_id": run_id,
             "started_at": "2026-01-01T00:00:00Z",
             "completed_at": "2026-01-01T00:00:01Z",
@@ -65,6 +67,11 @@ class ObservabilityTests(unittest.TestCase):
             "execution_errors": [] if status == "SUCCESS" else [{"message": "failure"}],
             "rule_results": rules,
         }
+        if data_zone is not None:
+            record["data_zone"] = data_zone
+        if data_path is not None:
+            record["data_path"] = data_path
+        return record
 
     def write_record(self, file_name: str, record: object) -> Path:
         path = self.source / file_name
@@ -207,7 +214,104 @@ class ObservabilityTests(unittest.TestCase):
         stored = self.query("SELECT sample_violations FROM dq_rule_results")[0][0]
         self.assertEqual(json.loads(stored), samples)
 
+    def test_legacy_record_loads_with_null_zone_and_path(self) -> None:
+        self.write_record("legacy.json", self.run_record())
+        self.assertEqual(self.build()["status"], "SUCCESS")
+        self.assertEqual(
+            self.query("SELECT data_zone, data_path FROM dq_runs")[0],
+            (None, None),
+        )
+
+    def test_new_raw_record_preserves_zone_and_path(self) -> None:
+        self.write_record(
+            "raw.json",
+            self.run_record(data_zone="raw", data_path="C:/project/data/raw"),
+        )
+        self.assertEqual(self.build()["status"], "SUCCESS")
+        self.assertEqual(
+            self.query("SELECT data_zone, data_path FROM dq_runs")[0],
+            ("raw", "C:/project/data/raw"),
+        )
+
+    def test_new_trusted_record_preserves_zone_and_path(self) -> None:
+        self.write_record(
+            "trusted.json",
+            self.run_record(data_zone="trusted", data_path="C:/project/data/trusted"),
+        )
+        self.assertEqual(self.build()["status"], "SUCCESS")
+        self.assertEqual(
+            self.query("SELECT data_zone, data_path FROM dq_runs")[0],
+            ("trusted", "C:/project/data/trusted"),
+        )
+
+    def test_raw_and_trusted_runs_coexist_with_correct_rule_association(self) -> None:
+        raw_rule = self.rule_result("RULE-RAW", "FAILED", ["raw-value"])
+        trusted_rule = self.rule_result("RULE-TRUSTED", "PASSED")
+        self.write_record(
+            "raw.json",
+            self.run_record(
+                "run-raw", rules=[raw_rule], data_zone="raw", data_path="/data/raw"
+            ),
+        )
+        self.write_record(
+            "trusted.json",
+            self.run_record(
+                "run-trusted",
+                rules=[trusted_rule],
+                data_zone="trusted",
+                data_path="/data/trusted",
+            ),
+        )
+        self.assertEqual(self.build()["status"], "SUCCESS")
+        rows = self.query(
+            """
+            SELECT r.data_zone, rr.run_id, rr.rule_id, rr.status
+            FROM dq_rule_results rr
+            JOIN dq_runs r USING (run_id)
+            ORDER BY r.data_zone
+            """
+        )
+        self.assertEqual(
+            rows,
+            [
+                ("raw", "run-raw", "RULE-RAW", "FAILED"),
+                ("trusted", "run-trusted", "RULE-TRUSTED", "PASSED"),
+            ],
+        )
+
+    def test_dq_metrics_are_projected_without_recomputation(self) -> None:
+        rule = self.rule_result(status="FAILED", samples=["evidence"])
+        rule["rows_total"] = 10
+        rule["rows_evaluated"] = 9
+        rule["violations"] = 7
+        rule["compliance_ratio"] = 0.2222222222
+        self.write_record("run.json", self.run_record(rules=[rule]))
+        self.assertEqual(self.build()["status"], "SUCCESS")
+        self.assertEqual(
+            self.query(
+                "SELECT rows_total, rows_evaluated, violations, compliance_ratio "
+                "FROM dq_rule_results"
+            )[0],
+            (10, 9, 7, 0.2222222222),
+        )
+
+    def test_partial_or_invalid_zone_metadata_fails(self) -> None:
+        partial = self.run_record()
+        partial["data_zone"] = "raw"
+        self.write_record("partial.json", partial)
+        execution = self.build()
+        self.assertEqual(execution["status"], "FAILED")
+        self.assertIn("both be present", execution["errors"][0]["message"])
+
+    def test_unsupported_zone_metadata_fails(self) -> None:
+        self.write_record(
+            "invalid.json",
+            self.run_record(data_zone="archive", data_path="/data/archive"),
+        )
+        execution = self.build()
+        self.assertEqual(execution["status"], "FAILED")
+        self.assertIn("raw or trusted", execution["errors"][0]["message"])
+
 
 if __name__ == "__main__":
     unittest.main()
-

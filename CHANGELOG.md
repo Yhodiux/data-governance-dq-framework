@@ -8,6 +8,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Step 5B explicit RAW/TRUSTED selection for the existing DQ engine without changing rule semantics.
+- `data_zone` and resolved `data_path` metadata in new DQ execution records.
+- Backward-compatible zone-aware DQ observability history using nullable run columns.
+- Tests for TRUSTED revalidation, input immutability, legacy history, and cross-zone coexistence.
 - Step 5 policy-driven standardization engine and complete local TRUSTED publication.
 - `CARD-STD-001` for strict full-match normalization of documented `card.issued` representation.
 - Generic `regex_replace` policy operator, policy validation, transformation evidence, and atomic directory publication.

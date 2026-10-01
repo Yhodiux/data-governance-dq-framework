@@ -33,6 +33,7 @@ DIMENSION_EXPECTATIONS = {
 }
 EMPTY_POLICIES = {"evaluate", "ignore"}
 SAMPLE_SIZE = 5
+DATA_ZONES = {"raw", "trusted"}
 
 
 @dataclass(frozen=True)
@@ -41,7 +42,8 @@ class DQConfig:
     catalog_path: Path
     relationships_path: Path
     rules_path: Path
-    raw_path: Path
+    data_path: Path
+    data_zone: str
     results_path: Path
 
 
@@ -281,7 +283,7 @@ def load_raw_tables(
     connection: duckdb.DuckDBPyConnection,
     catalog: dict[str, dict[str, Any]],
     rules: list[dict[str, Any]],
-    raw_path: Path,
+    data_path: Path,
     delimiter: str,
     quote: str,
 ) -> dict[str, str]:
@@ -292,9 +294,9 @@ def load_raw_tables(
 
     table_names: dict[str, str] = {}
     for index, asset_name in enumerate(sorted(asset_names)):
-        raw_file = raw_path / catalog[asset_name]["source_file"]
-        if not raw_file.is_file():
-            raise FileNotFoundError(f"RAW file is missing: {raw_file.name}")
+        data_file = data_path / catalog[asset_name]["source_file"]
+        if not data_file.is_file():
+            raise FileNotFoundError(f"Data-zone file is missing: {data_file.name}")
         table_name = f"dq_asset_{index}"
         connection.execute(
             f"""
@@ -304,7 +306,7 @@ def load_raw_tables(
                 all_varchar = true, nullstr = chr(0)
             )
             """,
-            [str(raw_file), delimiter, quote],
+            [str(data_file), delimiter, quote],
         )
         table_names[asset_name] = table_name
     return table_names
@@ -445,6 +447,8 @@ def run_dq(config: DQConfig) -> dict[str, Any]:
         "completed_at": None,
         "elapsed_seconds": None,
         "status": "FAILED",
+        "data_zone": config.data_zone,
+        "data_path": str(config.data_path.resolve()),
         "rules_total": 0,
         "rules_passed": 0,
         "rules_failed": 0,
@@ -453,6 +457,11 @@ def run_dq(config: DQConfig) -> dict[str, Any]:
     }
     connection: duckdb.DuckDBPyConnection | None = None
     try:
+        if config.data_zone not in DATA_ZONES:
+            raise ValueError(
+                f"Unsupported data_zone {config.data_zone}; expected one of: "
+                + ", ".join(sorted(DATA_ZONES))
+            )
         manifest_entries = load_manifest(config.manifest_path)
         manifest_files = {str(entry["name"]) for entry in manifest_entries}
         delimiter, quote = load_physical_format(config.manifest_path)
@@ -472,7 +481,7 @@ def run_dq(config: DQConfig) -> dict[str, Any]:
             connection,
             catalog,
             rules,
-            config.raw_path,
+            config.data_path,
             delimiter,
             quote,
         )
@@ -505,4 +514,3 @@ def run_dq(config: DQConfig) -> dict[str, Any]:
             record["execution_record"] = "UNAVAILABLE"
             record["status"] = "FAILED"
     return record
-

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -7,6 +8,7 @@ from pathlib import Path
 import yaml
 
 from src.dq import DQConfig, run_dq
+from src.dq.__main__ import build_parser
 
 
 class DQTests(unittest.TestCase):
@@ -165,14 +167,17 @@ class DQTests(unittest.TestCase):
             yaml.safe_dump({"rules": rules}, sort_keys=False), encoding="utf-8"
         )
 
-    def run_engine(self) -> dict[str, object]:
+    def run_engine(
+        self, data_path: Path | None = None, data_zone: str = "raw"
+    ) -> dict[str, object]:
         return run_dq(
             DQConfig(
                 manifest_path=self.manifest,
                 catalog_path=self.catalog,
                 relationships_path=self.relationships,
                 rules_path=self.rules,
-                raw_path=self.raw,
+                data_path=data_path or self.raw,
+                data_zone=data_zone,
                 results_path=self.results,
             )
         )
@@ -298,7 +303,69 @@ class DQTests(unittest.TestCase):
         self.assertEqual(execution["status"], "SUCCESS")
         self.assertEqual(after, before)
 
+    def test_cli_defaults_to_raw_zone_and_path(self) -> None:
+        args = build_parser().parse_args([])
+        self.assertEqual(args.data_zone, "raw")
+        self.assertEqual(args.data_path, Path("data/raw"))
+
+    def test_explicit_trusted_path_can_be_validated(self) -> None:
+        trusted = self.root / "trusted"
+        trusted.mkdir()
+        (trusted / "alpha.asc").write_bytes((self.raw / "alpha.asc").read_bytes())
+        (trusted / "reference.asc").write_bytes(
+            (self.raw / "reference.asc").read_bytes()
+        )
+        self.write_rules([self.allowed_rule()])
+        execution = self.run_engine(trusted, "trusted")
+        self.assertEqual(execution["status"], "SUCCESS")
+        self.assertEqual(execution["data_zone"], "trusted")
+        self.assertEqual(execution["data_path"], str(trusted.resolve()))
+
+    def test_execution_record_contains_zone_and_resolved_path(self) -> None:
+        self.write_rules([self.allowed_rule()])
+        execution = self.run_engine()
+        stored = json.loads(
+            Path(execution["execution_record"]).read_text(encoding="utf-8")
+        )
+        self.assertEqual(stored["data_zone"], "raw")
+        self.assertEqual(stored["data_path"], str(self.raw.resolve()))
+
+    def test_invalid_data_zone_is_rejected(self) -> None:
+        self.write_rules([self.allowed_rule()])
+        execution = self.run_engine(data_zone="archive")
+        self.assertEqual(execution["status"], "FAILED")
+        self.assertIn("Unsupported data_zone", execution["execution_errors"][0]["message"])
+
+    def test_data_path_change_does_not_change_rules_or_semantics(self) -> None:
+        trusted = self.root / "trusted"
+        trusted.mkdir()
+        for path in self.raw.glob("*.asc"):
+            (trusted / path.name).write_bytes(path.read_bytes())
+        self.write_rules([self.allowed_rule(), self.reference_rule()])
+        raw_execution = self.run_engine(self.raw, "raw")
+        trusted_execution = self.run_engine(trusted, "trusted")
+        self.assertEqual(raw_execution["rule_results"], trusted_execution["rule_results"])
+        self.assertEqual(raw_execution["rules_total"], trusted_execution["rules_total"])
+
+    def test_dq_does_not_transform_trusted_input(self) -> None:
+        trusted = self.root / "trusted"
+        trusted.mkdir()
+        (trusted / "alpha.asc").write_bytes(b"id;value\n1;C\n")
+        (trusted / "reference.asc").write_bytes(b"id\nA\nB\n")
+        self.write_rules([self.allowed_rule()])
+        before = {
+            path.name: (path.read_bytes(), path.stat().st_mtime_ns)
+            for path in trusted.glob("*.asc")
+        }
+        execution = self.run_engine(trusted, "trusted")
+        after = {
+            path.name: (path.read_bytes(), path.stat().st_mtime_ns)
+            for path in trusted.glob("*.asc")
+        }
+        self.assertEqual(execution["status"], "SUCCESS")
+        self.assertEqual(execution["rule_results"][0]["status"], "FAILED")
+        self.assertEqual(after, before)
+
 
 if __name__ == "__main__":
     unittest.main()
-

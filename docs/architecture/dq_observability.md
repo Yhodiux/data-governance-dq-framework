@@ -20,7 +20,9 @@ The DQ JSON files remain the immutable source evidence. DuckDB is a derived anal
 
 ## Analytical tables
 
-`dq_runs` stores one row per DQ execution: identifiers and timestamps normalized to UTC, elapsed time, technical status, rule counts, execution-error count, and source JSON filename.
+`dq_runs` stores one row per DQ execution: identifiers and timestamps normalized to UTC, elapsed time, technical status, rule counts, execution-error count, source JSON filename, and nullable `data_zone`/`data_path` execution metadata.
+
+New DQ records preserve their explicit `raw` or `trusted` zone and resolved physical path. Historical records created before zone metadata remain valid and are loaded with SQL `NULL` for both columns. The builder does not infer that a legacy run was RAW merely because RAW used to be the default.
 
 `dq_rule_results` stores the factual rule results contained by each execution: rule identity and scope, operator metadata, status, row counts, violations, compliance ratio, deterministic sample violations as JSON, and source filename. `(run_id, rule_id)` is the primary key.
 
@@ -34,7 +36,7 @@ Every invocation discovers all `*.json` files in deterministic filename order, v
 
 ## Input validation and malformed records
 
-The builder validates required run and rule-result fields, usable value types, ISO-8601 timestamps, unique run IDs, unique rule IDs within each run, and sample representation. For technically successful DQ runs, declared totals and passed/failed counts must agree with contained rule results.
+The builder validates required run and rule-result fields, usable value types, ISO-8601 timestamps, unique run IDs, unique rule IDs within each run, and sample representation. Optional zone metadata must either be absent as a complete legacy pair or contain both a supported zone and non-empty path. For technically successful DQ runs, declared totals and passed/failed counts must agree with contained rule results.
 
 Consistency rules that assume complete execution are not imposed on technically failed DQ runs; their available evidence is preserved without inventing missing results.
 
