@@ -8,6 +8,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Step 1B local DuckDB profiling over manifest-declared RAW files.
+- Physical table and column metrics with deterministic sample values.
+- JSON profiling execution results for successful and failed runs.
+- Profiling tests for metrics, empty parsing, missing RAW input, read-only behavior, and zero-denominator handling.
+- Local profiling architecture and metric-definition documentation.
 - Step 1A local manifest-driven ingestion command.
 - Source existence, SHA-256, and record-count integrity validation.
 - Atomic RAW publication with preservation of exact source bytes.

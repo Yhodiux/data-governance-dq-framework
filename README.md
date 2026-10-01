@@ -30,11 +30,24 @@ python -m src.ingestion --source berka-source/berka-dataset
 
 Each run writes a JSON execution record to `data/results/ingestion/`. A failed validation returns a non-zero exit code and leaves the existing RAW dataset unchanged.
 
+## Local profiling
+
+Step 1B profiles the physical textual representation of every manifest-declared RAW file with DuckDB. It reports table dimensions and per-column empty, non-empty, distinct, uniqueness, lexical range, and deterministic sample measurements without converting dates, numbers, or business codes.
+
+After a successful ingestion, run from the repository root:
+
+```bash
+python -m src.profiling
+```
+
+Use `python -m src.profiling --raw <path>` only when profiling another controlled RAW location. Each run writes a JSON result to `data/results/profiling/`. Profiling measurements are evidence, not automatic Data Quality findings or rules.
+
 In this project:
 
 - **SOURCE** means the original external dataset, unchanged and outside version control.
 - **RAW** means exact source files published only after validation against the dataset manifest.
-- **PROFILED METADATA**, **GOVERNANCE METADATA**, **TRUSTED**, and business **DATA QUALITY** capabilities are not implemented yet.
+- **PROFILING RESULTS** are physical measurements produced from RAW.
+- **GOVERNANCE METADATA**, **TRUSTED**, and business **DATA QUALITY** capabilities are not implemented yet.
 
 ## Planned capabilities
 
@@ -51,6 +64,6 @@ These capabilities are planned and have not yet been implemented.
 
 ## Current status
 
-**Step 1A - Local Ingestion.** The source baseline and local manifest-driven SOURCE-to-RAW ingestion are implemented. Profiling, business Data Quality execution, scoring, lineage processing, trusted-layer transformations, dashboards, and cloud components have not been implemented.
+**Step 1B - Local Data Profiling.** The source baseline, manifest-driven SOURCE-to-RAW ingestion, and physical RAW profiling are implemented. Business Data Quality execution, scoring, lineage processing, governance decisions, trusted-layer transformations, dashboards, and cloud components have not been implemented.
 
-See [`docs/source/dataset_assessment.md`](docs/source/dataset_assessment.md) for the source baseline, [`config/dataset_manifest.yaml`](config/dataset_manifest.yaml) for the expected files, and [`docs/architecture/local_ingestion.md`](docs/architecture/local_ingestion.md) for the ingestion flow.
+See [`docs/source/dataset_assessment.md`](docs/source/dataset_assessment.md) for the source baseline, [`config/dataset_manifest.yaml`](config/dataset_manifest.yaml) for the expected files, [`docs/architecture/local_ingestion.md`](docs/architecture/local_ingestion.md) for ingestion, and [`docs/architecture/local_profiling.md`](docs/architecture/local_profiling.md) for metric definitions and parser limitations.
