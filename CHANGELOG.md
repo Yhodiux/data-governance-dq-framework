@@ -8,6 +8,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Step 7A metadata-driven structural lineage derived from declared metadata and explicit framework contracts.
+- Deterministic DuckDB node/edge projection with typed policy context, structural DQ applicability, and logical relationships.
+- Evidence resolution, graph validation, atomic replacement, and isolated lineage build records without dataset/history reads.
+- Synthetic lineage tests and architecture documentation with acceptance SQL queries.
 - Step 6B snapshot DQ revalidation with the existing rules and unchanged operator semantics.
 - Explicit snapshot cutoff identity, configuration failure evidence, and preserved RAW/TRUSTED defaults.
 - Nullable snapshot cutoff dates in observability with legacy and pre-evaluation failure compatibility.

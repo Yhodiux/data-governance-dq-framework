@@ -136,7 +136,7 @@ The project is expected to add these capabilities incrementally:
 - lineage and traceability; and
 - reporting or dashboard views over results.
 
-Profiling, cataloging, DQ validation, execution traceability, policy-driven standardization and TRUSTED publication, post-standardization DQ revalidation, historical snapshot replay, and snapshot DQ revalidation are implemented. Scoring and reporting/dashboard views remain planned.
+Profiling, cataloging, DQ validation, execution records and DQ history, policy-driven standardization and TRUSTED publication, post-standardization DQ revalidation, historical snapshot replay, snapshot DQ revalidation, and structural lineage are implemented. Step 7B execution lineage, scoring, and reporting/dashboard views remain planned.
 
 ## Historical snapshots
 
@@ -155,8 +155,18 @@ without cleaning or transforming values. Assets without documented validity are
 selected by relationships or copied fully; this is not a complete reconstruction
 of historical knowledge. See [historical replay architecture](docs/architecture/historical_replay.md).
 
+## Structural lineage
+
+Step 7A projects the current metadata and explicit framework contracts into a queryable graph:
+
+```bash
+python -m src.lineage
+```
+
+The output is `data/results/lineage/lineage.duckdb`, containing only `lineage_nodes` and `lineage_edges`. It describes asset flows, authorized column transformations with policy context, DQ applicability, and documented logical relationships. The builder reads metadata and source contracts without reading datasets or execution history. SNAPSHOT has no cutoff or instance identity in this graph. Builds replace the projection atomically and retain deterministic logical IDs. See [data lineage architecture](docs/architecture/data_lineage.md) for the model, evidence, limitations, and acceptance SQL.
+
 ## Current status
 
-**Step 6B - Snapshot DQ Revalidation.** The same DQ engine validates RAW, TRUSTED, or existing historical snapshots with declared cutoff identity. Observability preserves snapshot identity and legacy execution history. Temporal observability, completeness, scoring, broader governance decisions, dashboards, and cloud components have not been implemented.
+**Step 7A - Metadata-Driven Structural Lineage.** The framework now projects the current metadata and explicit processing contracts into a deterministic DuckDB graph. Snapshot DQ revalidation and zone-aware DQ history remain available. Step 7B execution lineage, temporal observability, completeness, scoring, broader governance decisions, dashboards, and cloud components have not been implemented.
 
 See [`docs/source/dataset_assessment.md`](docs/source/dataset_assessment.md) for the source baseline, [`config/dataset_manifest.yaml`](config/dataset_manifest.yaml) for expected files, [`docs/architecture/local_ingestion.md`](docs/architecture/local_ingestion.md) for ingestion, [`docs/architecture/local_profiling.md`](docs/architecture/local_profiling.md) for profiling, [`docs/architecture/metadata_catalog.md`](docs/architecture/metadata_catalog.md) for the catalog, [`docs/architecture/data_quality.md`](docs/architecture/data_quality.md) for DQ semantics, [`docs/architecture/dq_observability.md`](docs/architecture/dq_observability.md) for history, and [`docs/architecture/standardization_trusted.md`](docs/architecture/standardization_trusted.md) for TRUSTED publication.
