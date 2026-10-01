@@ -66,6 +66,18 @@ python -m src.dq
 
 Each run writes a JSON result to `data/results/dq/`. A successful engine execution may contain failed rules when violations are observed. Empty-string handling is explicit per rule through `empty_policy`; completeness, thresholds, global scoring, remediation, and TRUSTED output are not implemented.
 
+## Local DQ observability
+
+Step 4 rebuilds a queryable DuckDB history from the immutable DQ execution JSON records:
+
+```bash
+python -m src.observability
+```
+
+The output is `data/results/observability/dq_history.duckdb`, containing `dq_runs` and `dq_rule_results`. Each build validates the complete JSON input set and publishes a full replacement atomically, so repeated builds do not duplicate rows. The builder does not rerun DQ or read RAW.
+
+This is execution history, not a global DQ score or proof of improvement or deterioration. Repeated runs over unchanged RAW may naturally contain identical results.
+
 In this project:
 
 - **SOURCE** means the original external dataset, unchanged and outside version control.
@@ -74,6 +86,7 @@ In this project:
 - **SOURCE METADATA CATALOG** contains definitions supported by source documentation.
 - **DQ RULES** contain explicit executable expectations with traceable evidence.
 - **DQ RESULTS** contain observed outcomes for those expectations.
+- **DQ OBSERVABILITY** is a reproducible analytical projection of DQ execution records.
 - **GOVERNANCE DECISIONS**, **TRUSTED**, completeness rules, and DQ scoring are not implemented yet.
 
 ## Planned capabilities
@@ -91,6 +104,6 @@ These capabilities are planned and have not yet been implemented.
 
 ## Current status
 
-**Step 3 - Metadata-Driven Data Quality.** The source baseline, local ingestion, physical profiling, source-driven catalog, catalog validation, and the initial validity, uniqueness, and referential-integrity rule portfolio are implemented. Completeness, scoring, lineage processing, governance decisions, trusted-layer transformations, dashboards, and cloud components have not been implemented.
+**Step 4 - Local DQ Observability and Run History.** The source baseline, local ingestion, physical profiling, source-driven catalog, metadata-driven DQ execution, and reproducible DuckDB run history are implemented. Completeness, scoring, lineage processing, governance decisions, trusted-layer transformations, replay, dashboards, and cloud components have not been implemented.
 
-See [`docs/source/dataset_assessment.md`](docs/source/dataset_assessment.md) for the source baseline, [`config/dataset_manifest.yaml`](config/dataset_manifest.yaml) for expected files, [`docs/architecture/local_ingestion.md`](docs/architecture/local_ingestion.md) for ingestion, [`docs/architecture/local_profiling.md`](docs/architecture/local_profiling.md) for profiling, [`docs/architecture/metadata_catalog.md`](docs/architecture/metadata_catalog.md) for the catalog, and [`docs/architecture/data_quality.md`](docs/architecture/data_quality.md) for rule and result semantics.
+See [`docs/source/dataset_assessment.md`](docs/source/dataset_assessment.md) for the source baseline, [`config/dataset_manifest.yaml`](config/dataset_manifest.yaml) for expected files, [`docs/architecture/local_ingestion.md`](docs/architecture/local_ingestion.md) for ingestion, [`docs/architecture/local_profiling.md`](docs/architecture/local_profiling.md) for profiling, [`docs/architecture/metadata_catalog.md`](docs/architecture/metadata_catalog.md) for the catalog, [`docs/architecture/data_quality.md`](docs/architecture/data_quality.md) for rule semantics, and [`docs/architecture/dq_observability.md`](docs/architecture/dq_observability.md) for run history.

@@ -8,6 +8,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Step 4 local DQ observability builder and reproducible DuckDB execution history.
+- `dq_runs` and `dq_rule_results` analytical tables sourced exclusively from DQ JSON evidence.
+- Strict source-record validation, deterministic full rebuild, and atomic database publication.
+- JSON observability build records plus focused history, idempotency, and failure-safety tests.
 - Step 3 metadata-driven Data Quality engine using DuckDB against unchanged RAW files.
 - Twenty evidence-linked YAML rules across validity, uniqueness, and referential-integrity dimensions.
 - Generic `allowed_values`, `regex_format`, `unique`, and `reference_exists` operators with explicit empty-value policies.
