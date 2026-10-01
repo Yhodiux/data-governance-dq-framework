@@ -1,0 +1,58 @@
+decisions:
+  - decision_id: GOV-DEC-001
+    issue_id: GOV-ISS-001
+    decision_type: REMEDIATION_AUTHORIZED
+    status: EFFECTIVE
+    policy_id: CARD-STD-001
+    decision_date: null
+    actor: null
+    rationale: >-
+      Source documentation defines card.issued as YYMMDD. The existing policy
+      normalizes only the documented/observed physical suffix " 00:00:00",
+      preserving the six digits. This Step 10 declaration references existing
+      authorization and separate execution evidence, without asserting a causal
+      chain between legacy DQ, standardization and TRUSTED DQ runs.
+    evidence:
+      - {type: METADATA, path: metadata/catalog/card.yaml, description: Documented YYMMDD representation supporting the decision.}
+      - {type: METADATA, path: metadata/standardization/card.yaml, policy_id: CARD-STD-001, description: Existing strictly scoped normalization authorization.}
+  - decision_id: GOV-DEC-002
+    issue_id: GOV-ISS-002
+    decision_type: REMEDIATION_WITHHELD
+    status: ACTIVE
+    policy_id: null
+    decision_date: null
+    actor: null
+    rationale: >-
+      The available evidence does not authorize mapping VYBER to another value
+      or automatically extending the trans.type domain. The finding remains
+      open pending a supported semantic decision. Withholding remediation is
+      an explicit new project decision introduced in Step 10, not a historical
+      decision inferred from the absence of transformation.
+    evidence:
+      - {type: METADATA, path: metadata/dq_rules/validity.yaml, rule_id: TRA-VAL-002, description: Scope of the recorded expectation.}
+  - decision_id: GOV-DEC-003
+    issue_id: GOV-ISS-003
+    decision_type: REMEDIATION_WITHHELD
+    status: ACTIVE
+    policy_id: null
+    decision_date: null
+    actor: null
+    rationale: >-
+      Available evidence does not authorize interpreting whitespace as empty,
+      NULL or another value, or applying automatic trimming. Withholding
+      remediation is an explicit new Step 10 project decision.
+    evidence:
+      - {type: METADATA, path: metadata/dq_rules/validity.yaml, rule_id: ORD-VAL-001, description: Scope of the recorded expectation.}
+  - decision_id: GOV-DEC-004
+    issue_id: GOV-ISS-004
+    decision_type: REMEDIATION_WITHHELD
+    status: ACTIVE
+    policy_id: null
+    decision_date: null
+    actor: null
+    rationale: >-
+      Available evidence does not authorize interpreting whitespace as empty,
+      NULL or another value, or applying automatic trimming. Withholding
+      remediation is an explicit new Step 10 project decision.
+    evidence:
+      - {type: METADATA, path: metadata/dq_rules/validity.yaml, rule_id: TRA-VAL-004, description: Scope of the recorded expectation.}

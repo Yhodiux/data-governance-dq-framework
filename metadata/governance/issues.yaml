@@ -1,0 +1,53 @@
+issues:
+  - issue_id: GOV-ISS-001
+    asset: card
+    column: issued
+    rule_id: CAR-VAL-002
+    status: RESOLVED
+    description: >-
+      The observed representation violated the recorded YYMMDD expectation.
+      An explicit CARD-STD-001 policy exists, with separate standardization
+      execution evidence and a subsequent TRUSTED DQ evaluation.
+    evidence:
+      - {type: METADATA, path: metadata/catalog/card.yaml, description: Documented YYMMDD representation for card.issued.}
+      - {type: METADATA, path: metadata/dq_rules/validity.yaml, rule_id: CAR-VAL-002, description: Recorded format expectation.}
+      - {type: METADATA, path: metadata/standardization/card.yaml, policy_id: CARD-STD-001, description: Explicit authorized normalization policy.}
+      - {type: DQ_EXECUTION, path: data/results/dq/20261001T013557.424850Z-48654f22.json, run_id: 20261001T013557.424850Z-48654f22, rule_id: CAR-VAL-002, description: Legacy evaluation reports format violations with unknown zone.}
+      - {type: STANDARDIZATION_EXECUTION, path: data/results/standardization/std-20261001T022159.952149Z-88fe0f44.json, run_id: std-20261001T022159.952149Z-88fe0f44, policy_id: CARD-STD-001, description: Execution reports application and 892 changed rows.}
+      - {type: DQ_EXECUTION, path: data/results/dq/20261001T023050.406156Z-b6e62a52.json, run_id: 20261001T023050.406156Z-b6e62a52, rule_id: CAR-VAL-002, description: Separate TRUSTED evaluation reports conformity without asserting upstream run identity.}
+  - issue_id: GOV-ISS-002
+    asset: trans
+    column: type
+    rule_id: TRA-VAL-002
+    status: OPEN
+    description: >-
+      VYBER appears as a violation sample for the recorded trans.type expectation.
+      No transformation policy currently exists for trans.type.
+    evidence:
+      - {type: METADATA, path: metadata/catalog/trans.yaml, description: Documented trans.type domain.}
+      - {type: METADATA, path: metadata/dq_rules/validity.yaml, rule_id: TRA-VAL-002, description: Recorded allowed-values expectation.}
+      - {type: DQ_EXECUTION, path: data/results/dq/20261001T023050.406156Z-b6e62a52.json, run_id: 20261001T023050.406156Z-b6e62a52, rule_id: TRA-VAL-002, description: TRUSTED evaluation reports violations and a VYBER sample.}
+  - issue_id: GOV-ISS-003
+    asset: order
+    column: k_symbol
+    rule_id: ORD-VAL-001
+    status: OPEN
+    description: >-
+      Whitespace appears as a violation sample for the recorded expectation.
+      No transformation policy currently exists for order.k_symbol.
+    evidence:
+      - {type: METADATA, path: metadata/catalog/order.yaml, description: Documented order.k_symbol domain.}
+      - {type: METADATA, path: metadata/dq_rules/validity.yaml, rule_id: ORD-VAL-001, description: Recorded expectation with explicit empty policy.}
+      - {type: DQ_EXECUTION, path: data/results/dq/20261001T023050.406156Z-b6e62a52.json, run_id: 20261001T023050.406156Z-b6e62a52, rule_id: ORD-VAL-001, description: TRUSTED evaluation reports violations and a single-space sample.}
+  - issue_id: GOV-ISS-004
+    asset: trans
+    column: k_symbol
+    rule_id: TRA-VAL-004
+    status: OPEN
+    description: >-
+      Whitespace appears as a violation sample for the recorded expectation.
+      No transformation policy currently exists for trans.k_symbol.
+    evidence:
+      - {type: METADATA, path: metadata/catalog/trans.yaml, description: Documented trans.k_symbol domain.}
+      - {type: METADATA, path: metadata/dq_rules/validity.yaml, rule_id: TRA-VAL-004, description: Recorded expectation with explicit empty policy.}
+      - {type: DQ_EXECUTION, path: data/results/dq/20261001T023050.406156Z-b6e62a52.json, run_id: 20261001T023050.406156Z-b6e62a52, rule_id: TRA-VAL-004, description: TRUSTED evaluation reports violations and a single-space sample.}

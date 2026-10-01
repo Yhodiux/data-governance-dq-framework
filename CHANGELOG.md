@@ -8,6 +8,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Step 10 declarative governance registry with four evidence-linked issues and four explicit authorization/withholding decisions.
+- Validated original evidence references, nullable actor/date, deterministic IDs and atomic DuckDB publication without inferred execution dependencies.
+- Focused governance tests and architecture documentation with acceptance queries A-H.
 - Step 9 temporal DQ observability through four snapshot views in the existing metrics database.
 - Historical cutoff queries retaining per-run identity, changing evaluation denominators, and explicit row-rule semantics without automatic temporal classifications.
 - Focused tests for view schemas, snapshot filtering, repeated-cutoff runs, deterministic rebuilds, and acceptance SQL.
