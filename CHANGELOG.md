@@ -8,6 +8,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Step 8 reproducible DQ evaluation metrics and explicit run/asset/dimension/cutoff aggregates from read-only observability.
+- Validated recorded compliance, zero-denominator NULLs, row-rule semantics, legacy identity preservation, and atomic deterministic publication.
+- Focused synthetic metrics tests and acceptance SQL without global scoring or automatic snapshot trend interpretation.
 - Step 7B execution traceability over authoritative ingestion, DQ, standardization, and replay JSON records.
 - Deterministic atomic DuckDB projection of runs, explicit metrics, and nested details with legacy NULL preservation and no inferred causal dependencies.
 - Focused synthetic tests and execution traceability architecture with acceptance SQL.
