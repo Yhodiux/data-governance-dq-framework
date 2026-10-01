@@ -11,3 +11,7 @@
 /data/results/*
 !/data/results/.gitkeep
 
+# Python-generated local files.
+__pycache__/
+*.py[cod]
+.coverage
