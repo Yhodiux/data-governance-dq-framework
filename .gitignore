@@ -1,0 +1,13 @@
+# Local source package retained outside version control.
+/berka-source/
+
+# Data zones: keep only their placeholders in Git.
+/data/source/*
+!/data/source/.gitkeep
+/data/raw/*
+!/data/raw/.gitkeep
+/data/trusted/*
+!/data/trusted/.gitkeep
+/data/results/*
+!/data/results/.gitkeep
+
