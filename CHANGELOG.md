@@ -8,6 +8,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Step 11A read-only Power BI reporting builder publishing eight typed Parquet datasets from existing result databases.
+- Stable schemas, exact counters, grain/FK checks, deterministic logical exports and failure-safe whole-directory publication.
+- Focused synthetic reporting tests and a documented three-page Power BI model with unidirectional relationships and preserved denominators.
 - Step 10 declarative governance registry with four evidence-linked issues and four explicit authorization/withholding decisions.
 - Validated original evidence references, nullable actor/date, deterministic IDs and atomic DuckDB publication without inferred execution dependencies.
 - Focused governance tests and architecture documentation with acceptance queries A-H.
