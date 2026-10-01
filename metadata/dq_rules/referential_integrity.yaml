@@ -1,0 +1,97 @@
+rules:
+  - id: ACC-RI-001
+    asset: account
+    column: district_id
+    dimension: referential_integrity
+    expectation:
+      type: reference_exists
+      reference: {asset: district, column: A1}
+    empty_policy: evaluate
+    evidence:
+      type: catalog_relationship
+      reference: account_to_district
+
+  - id: CLI-RI-001
+    asset: client
+    column: district_id
+    dimension: referential_integrity
+    expectation:
+      type: reference_exists
+      reference: {asset: district, column: A1}
+    empty_policy: evaluate
+    evidence:
+      type: catalog_relationship
+      reference: client_to_district
+
+  - id: DIS-RI-001
+    asset: disp
+    column: client_id
+    dimension: referential_integrity
+    expectation:
+      type: reference_exists
+      reference: {asset: client, column: client_id}
+    empty_policy: evaluate
+    evidence:
+      type: catalog_relationship
+      reference: disposition_to_client
+
+  - id: DIS-RI-002
+    asset: disp
+    column: account_id
+    dimension: referential_integrity
+    expectation:
+      type: reference_exists
+      reference: {asset: account, column: account_id}
+    empty_policy: evaluate
+    evidence:
+      type: catalog_relationship
+      reference: disposition_to_account
+
+  - id: LOA-RI-001
+    asset: loan
+    column: account_id
+    dimension: referential_integrity
+    expectation:
+      type: reference_exists
+      reference: {asset: account, column: account_id}
+    empty_policy: evaluate
+    evidence:
+      type: catalog_relationship
+      reference: loan_to_account
+
+  - id: ORD-RI-001
+    asset: order
+    column: account_id
+    dimension: referential_integrity
+    expectation:
+      type: reference_exists
+      reference: {asset: account, column: account_id}
+    empty_policy: evaluate
+    evidence:
+      type: catalog_relationship
+      reference: permanent_order_to_account
+
+  - id: TRA-RI-001
+    asset: trans
+    column: account_id
+    dimension: referential_integrity
+    expectation:
+      type: reference_exists
+      reference: {asset: account, column: account_id}
+    empty_policy: evaluate
+    evidence:
+      type: catalog_relationship
+      reference: transaction_to_account
+
+  - id: CAR-RI-001
+    asset: card
+    column: disp_id
+    dimension: referential_integrity
+    expectation:
+      type: reference_exists
+      reference: {asset: disp, column: disp_id}
+    empty_policy: evaluate
+    evidence:
+      type: catalog_relationship
+      reference: credit_card_to_disposition
+

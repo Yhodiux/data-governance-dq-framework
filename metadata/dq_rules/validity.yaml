@@ -1,0 +1,133 @@
+rules:
+  - id: ACC-VAL-001
+    asset: account
+    column: frequency
+    dimension: validity
+    expectation:
+      type: allowed_values
+      values: [POPLATEK MESICNE, POPLATEK TYDNE, POPLATEK PO OBRATU]
+    empty_policy: evaluate
+    evidence:
+      type: catalog
+      reference: account.frequency
+
+  - id: ACC-VAL-002
+    asset: account
+    column: date
+    dimension: validity
+    expectation:
+      type: regex_format
+      pattern: '^\d{6}$'
+    empty_policy: evaluate
+    evidence:
+      type: catalog
+      reference: account.date
+
+  - id: LOA-VAL-001
+    asset: loan
+    column: date
+    dimension: validity
+    expectation:
+      type: regex_format
+      pattern: '^\d{6}$'
+    empty_policy: evaluate
+    evidence:
+      type: catalog
+      reference: loan.date
+
+  - id: LOA-VAL-002
+    asset: loan
+    column: status
+    dimension: validity
+    expectation:
+      type: allowed_values
+      values: [A, B, C, D]
+    empty_policy: evaluate
+    evidence:
+      type: catalog
+      reference: loan.status
+
+  - id: ORD-VAL-001
+    asset: order
+    column: k_symbol
+    dimension: validity
+    expectation:
+      type: allowed_values
+      values: [POJISTNE, SIPO, LEASING, UVER]
+    empty_policy: ignore
+    evidence:
+      type: catalog
+      reference: order.k_symbol
+
+  - id: TRA-VAL-001
+    asset: trans
+    column: date
+    dimension: validity
+    expectation:
+      type: regex_format
+      pattern: '^\d{6}$'
+    empty_policy: evaluate
+    evidence:
+      type: catalog
+      reference: trans.date
+
+  - id: TRA-VAL-002
+    asset: trans
+    column: type
+    dimension: validity
+    expectation:
+      type: allowed_values
+      values: [PRIJEM, VYDAJ]
+    empty_policy: evaluate
+    evidence:
+      type: catalog
+      reference: trans.type
+
+  - id: TRA-VAL-003
+    asset: trans
+    column: operation
+    dimension: validity
+    expectation:
+      type: allowed_values
+      values: [VYBER KARTOU, VKLAD, PREVOD Z UCTU, VYBER, PREVOD NA UCET]
+    empty_policy: ignore
+    evidence:
+      type: catalog
+      reference: trans.operation
+
+  - id: TRA-VAL-004
+    asset: trans
+    column: k_symbol
+    dimension: validity
+    expectation:
+      type: allowed_values
+      values: [POJISTNE, SLUZBY, UROK, SANKC. UROK, SIPO, DUCHOD, UVER]
+    empty_policy: ignore
+    evidence:
+      type: catalog
+      reference: trans.k_symbol
+
+  - id: CAR-VAL-001
+    asset: card
+    column: type
+    dimension: validity
+    expectation:
+      type: allowed_values
+      values: [junior, classic, gold]
+    empty_policy: evaluate
+    evidence:
+      type: catalog
+      reference: card.type
+
+  - id: CAR-VAL-002
+    asset: card
+    column: issued
+    dimension: validity
+    expectation:
+      type: regex_format
+      pattern: '^\d{6}$'
+    empty_policy: evaluate
+    evidence:
+      type: catalog
+      reference: card.issued
+

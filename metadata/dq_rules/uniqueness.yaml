@@ -1,0 +1,12 @@
+rules:
+  - id: LOA-UNI-001
+    asset: loan
+    column: account_id
+    dimension: uniqueness
+    expectation:
+      type: unique
+    empty_policy: evaluate
+    evidence:
+      type: source_documentation
+      description: At most one loan may be associated with an account.
+

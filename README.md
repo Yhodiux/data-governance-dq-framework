@@ -54,13 +54,27 @@ python -m src.catalog
 
 The command reads only RAW headers and writes a JSON execution record to `data/results/catalog/`. Catalog validation checks metadata consistency; it is not business Data Quality validation.
 
+## Metadata-driven Data Quality
+
+Step 3 executes YAML-declared expectations against unchanged RAW files with DuckDB. The generic engine supports `allowed_values`, `regex_format`, `unique`, and `reference_exists` across the validity, uniqueness, and referential-integrity dimensions.
+
+Run from the repository root:
+
+```bash
+python -m src.dq
+```
+
+Each run writes a JSON result to `data/results/dq/`. A successful engine execution may contain failed rules when violations are observed. Empty-string handling is explicit per rule through `empty_policy`; completeness, thresholds, global scoring, remediation, and TRUSTED output are not implemented.
+
 In this project:
 
 - **SOURCE** means the original external dataset, unchanged and outside version control.
 - **RAW** means exact source files published only after validation against the dataset manifest.
 - **PROFILING RESULTS** are physical measurements produced from RAW.
 - **SOURCE METADATA CATALOG** contains definitions supported by source documentation.
-- **GOVERNANCE DECISIONS**, **TRUSTED**, and business **DATA QUALITY** capabilities are not implemented yet.
+- **DQ RULES** contain explicit executable expectations with traceable evidence.
+- **DQ RESULTS** contain observed outcomes for those expectations.
+- **GOVERNANCE DECISIONS**, **TRUSTED**, completeness rules, and DQ scoring are not implemented yet.
 
 ## Planned capabilities
 
@@ -77,6 +91,6 @@ These capabilities are planned and have not yet been implemented.
 
 ## Current status
 
-**Step 2 - Metadata Catalog.** The source baseline, local ingestion, physical RAW profiling, source-documentation catalog, and catalog validator are implemented. Business Data Quality execution, scoring, lineage processing, governance decisions, trusted-layer transformations, dashboards, and cloud components have not been implemented.
+**Step 3 - Metadata-Driven Data Quality.** The source baseline, local ingestion, physical profiling, source-driven catalog, catalog validation, and the initial validity, uniqueness, and referential-integrity rule portfolio are implemented. Completeness, scoring, lineage processing, governance decisions, trusted-layer transformations, dashboards, and cloud components have not been implemented.
 
-See [`docs/source/dataset_assessment.md`](docs/source/dataset_assessment.md) for the source baseline, [`config/dataset_manifest.yaml`](config/dataset_manifest.yaml) for the expected files, [`docs/architecture/local_ingestion.md`](docs/architecture/local_ingestion.md) for ingestion, [`docs/architecture/local_profiling.md`](docs/architecture/local_profiling.md) for profiling, and [`docs/architecture/metadata_catalog.md`](docs/architecture/metadata_catalog.md) for catalog structure and boundaries.
+See [`docs/source/dataset_assessment.md`](docs/source/dataset_assessment.md) for the source baseline, [`config/dataset_manifest.yaml`](config/dataset_manifest.yaml) for expected files, [`docs/architecture/local_ingestion.md`](docs/architecture/local_ingestion.md) for ingestion, [`docs/architecture/local_profiling.md`](docs/architecture/local_profiling.md) for profiling, [`docs/architecture/metadata_catalog.md`](docs/architecture/metadata_catalog.md) for the catalog, and [`docs/architecture/data_quality.md`](docs/architecture/data_quality.md) for rule and result semantics.

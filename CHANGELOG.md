@@ -8,6 +8,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Step 3 metadata-driven Data Quality engine using DuckDB against unchanged RAW files.
+- Twenty evidence-linked YAML rules across validity, uniqueness, and referential-integrity dimensions.
+- Generic `allowed_values`, `regex_format`, `unique`, and `reference_exists` operators with explicit empty-value policies.
+- Rule metadata validation, deterministic violation samples, and JSON DQ execution results.
+- Focused DQ tests and Data Quality architecture documentation.
 - Step 2 source-documentation metadata catalog for eight Berka assets and their relationships.
 - Local catalog validator for manifest coverage, required structure, RAW-header consistency, uniqueness, and relationship endpoints.
 - JSON execution records for catalog validation runs.
