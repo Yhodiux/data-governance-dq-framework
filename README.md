@@ -136,7 +136,7 @@ The project is expected to add these capabilities incrementally:
 - lineage and traceability; and
 - reporting or dashboard views over results.
 
-Profiling, cataloging, DQ validation, execution records and DQ history, policy-driven standardization and TRUSTED publication, post-standardization DQ revalidation, historical snapshot replay, snapshot DQ revalidation, and structural lineage are implemented. Step 7B execution lineage, scoring, and reporting/dashboard views remain planned.
+Profiling, cataloging, DQ validation, execution records and DQ history, policy-driven standardization and TRUSTED publication, post-standardization DQ revalidation, historical snapshot replay, snapshot DQ revalidation, structural lineage, and execution traceability are implemented. Scoring and reporting/dashboard views remain planned.
 
 ## Historical snapshots
 
@@ -167,6 +167,6 @@ The output is `data/results/lineage/lineage.duckdb`, containing only `lineage_no
 
 ## Current status
 
-**Step 7A - Metadata-Driven Structural Lineage.** The framework now projects the current metadata and explicit processing contracts into a deterministic DuckDB graph. Snapshot DQ revalidation and zone-aware DQ history remain available. Step 7B execution lineage, temporal observability, completeness, scoring, broader governance decisions, dashboards, and cloud components have not been implemented.
+**Step 7B - Execution Traceability.** Run `python -m src.traceability` to project the existing ingestion, DQ, standardization, and replay JSON records into `data/results/traceability/execution_traceability.duckdb`. The three tables preserve execution facts and unknown legacy fields without reading datasets or inferring causal relationships between runs. See [execution traceability architecture](docs/architecture/execution_traceability.md). Temporal observability, completeness, scoring, broader governance decisions, dashboards, and cloud components have not been implemented.
 
 See [`docs/source/dataset_assessment.md`](docs/source/dataset_assessment.md) for the source baseline, [`config/dataset_manifest.yaml`](config/dataset_manifest.yaml) for expected files, [`docs/architecture/local_ingestion.md`](docs/architecture/local_ingestion.md) for ingestion, [`docs/architecture/local_profiling.md`](docs/architecture/local_profiling.md) for profiling, [`docs/architecture/metadata_catalog.md`](docs/architecture/metadata_catalog.md) for the catalog, [`docs/architecture/data_quality.md`](docs/architecture/data_quality.md) for DQ semantics, [`docs/architecture/dq_observability.md`](docs/architecture/dq_observability.md) for history, and [`docs/architecture/standardization_trusted.md`](docs/architecture/standardization_trusted.md) for TRUSTED publication.

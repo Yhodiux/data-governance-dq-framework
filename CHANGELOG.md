@@ -8,6 +8,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Step 7B execution traceability over authoritative ingestion, DQ, standardization, and replay JSON records.
+- Deterministic atomic DuckDB projection of runs, explicit metrics, and nested details with legacy NULL preservation and no inferred causal dependencies.
+- Focused synthetic tests and execution traceability architecture with acceptance SQL.
 - Step 7A metadata-driven structural lineage derived from declared metadata and explicit framework contracts.
 - Deterministic DuckDB node/edge projection with typed policy context, structural DQ applicability, and logical relationships.
 - Evidence resolution, graph validation, atomic replacement, and isolated lineage build records without dataset/history reads.
