@@ -8,6 +8,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Step 9 temporal DQ observability through four snapshot views in the existing metrics database.
+- Historical cutoff queries retaining per-run identity, changing evaluation denominators, and explicit row-rule semantics without automatic temporal classifications.
+- Focused tests for view schemas, snapshot filtering, repeated-cutoff runs, deterministic rebuilds, and acceptance SQL.
 - Step 8 reproducible DQ evaluation metrics and explicit run/asset/dimension/cutoff aggregates from read-only observability.
 - Validated recorded compliance, zero-denominator NULLs, row-rule semantics, legacy identity preservation, and atomic deterministic publication.
 - Focused synthetic metrics tests and acceptance SQL without global scoring or automatic snapshot trend interpretation.

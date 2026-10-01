@@ -95,6 +95,29 @@ def load_evaluations(config: MetricsConfig) -> list[tuple]:
     return evaluations
 
 
+def create_temporal_views(connection) -> None:
+    connection.execute("""CREATE VIEW dq_snapshot_rule_history AS
+        SELECT snapshot_cutoff, run_id, started_at, rule_id, asset, column_name,
+            dimension, expectation_type, empty_policy, status, rows_total,
+            rows_evaluated, rows_not_evaluated, evaluation_ratio, violations,
+            conforming_evaluations, violation_ratio, compliance_ratio
+        FROM dq_evaluation_metrics
+        WHERE data_zone='snapshot' AND snapshot_cutoff IS NOT NULL""")
+    aggregate_columns = """evaluations, distinct_rules, passed_evaluations,
+        failed_evaluations, pass_ratio, row_rule_evaluations, row_rule_violations,
+        row_rule_conforming, weighted_violation_ratio, weighted_compliance_ratio"""
+    for name, level, scope in (
+        ("dq_snapshot_asset_history", "RUN_ASSET", ", asset"),
+        ("dq_snapshot_dimension_history", "RUN_DIMENSION", ", dimension"),
+        ("dq_snapshot_evaluation_summary", "RUN", ""),
+    ):
+        connection.execute(f"""CREATE VIEW {name} AS
+            SELECT snapshot_cutoff, run_id{scope}, {aggregate_columns}
+            FROM dq_aggregate_metrics
+            WHERE aggregation_level='{level}'
+              AND data_zone='snapshot' AND snapshot_cutoff IS NOT NULL""")
+
+
 def publish_metrics(config: MetricsConfig, evaluations: list[tuple]) -> int:
     database = config.database_path.resolve()
     database.parent.mkdir(parents=True, exist_ok=True)
@@ -136,6 +159,7 @@ def publish_metrics(config: MetricsConfig, evaluations: list[tuple]) -> int:
         if connection.execute("SELECT count(*) FROM dq_evaluation_metrics").fetchone()[0] != len(evaluations):
             raise ValueError("Evaluation count mismatch")
         aggregates = connection.execute("SELECT count(*) FROM dq_aggregate_metrics").fetchone()[0]
+        create_temporal_views(connection)
         connection.execute("CHECKPOINT")
         connection.close()
         connection = None

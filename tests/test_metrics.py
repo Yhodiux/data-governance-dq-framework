@@ -117,9 +117,11 @@ class MetricsTests(unittest.TestCase):
     def test_deterministic_rebuild_and_source_immutability(self):
         before = (hashlib.sha256(self.config.source_path.read_bytes()).hexdigest(),self.config.source_path.stat().st_mtime_ns)
         self.build()
-        rows = [self.query("SELECT * FROM "+t+" ORDER BY ALL") for t in ("dq_evaluation_metrics","dq_aggregate_metrics")]
+        tables = ("dq_evaluation_metrics", "dq_aggregate_metrics", "dq_snapshot_rule_history",
+                  "dq_snapshot_asset_history", "dq_snapshot_dimension_history", "dq_snapshot_evaluation_summary")
+        rows = [self.query("SELECT * FROM "+t+" ORDER BY ALL") for t in tables]
         self.build()
-        self.assertEqual(rows,[self.query("SELECT * FROM "+t+" ORDER BY ALL") for t in ("dq_evaluation_metrics","dq_aggregate_metrics")])
+        self.assertEqual(rows,[self.query("SELECT * FROM "+t+" ORDER BY ALL") for t in tables])
         self.assertEqual(before,(hashlib.sha256(self.config.source_path.read_bytes()).hexdigest(),self.config.source_path.stat().st_mtime_ns))
 
     def test_build_and_publication_failure_preserve_previous(self):
@@ -150,7 +152,63 @@ class MetricsTests(unittest.TestCase):
         # Only the synthetic observability DB exists; no traceability or metadata.
         self.build()
         self.assertEqual(self.query("SELECT DISTINCT dimension FROM dq_evaluation_metrics ORDER BY 1"),[("uniqueness",),("validity",)])
-        self.assertEqual(self.query("SHOW TABLES"),[("dq_aggregate_metrics",),("dq_evaluation_metrics",)])
+        self.assertEqual(self.query("SELECT table_name FROM duckdb_tables() ORDER BY table_name"),[("dq_aggregate_metrics",),("dq_evaluation_metrics",)])
+
+    def test_temporal_views_exact_fields_and_snapshot_filters(self):
+        self.change("INSERT INTO dq_runs VALUES ('no-cutoff','2026-01-04','snapshot',NULL,'snapshot')")
+        self.change("INSERT INTO dq_rule_results SELECT 'no-cutoff',rule_id,asset,column_name,dimension,expectation_type,empty_policy,status,rows_total,rows_evaluated,violations,compliance_ratio FROM dq_rule_results WHERE run_id='snapshot'")
+        self.change("UPDATE dq_runs SET snapshot_cutoff='1998-12-31' WHERE run_id='trusted'")
+        self.build()
+        views = self.query("SELECT view_name FROM duckdb_views() WHERE NOT internal ORDER BY view_name")
+        self.assertEqual(views, [("dq_snapshot_asset_history",),("dq_snapshot_dimension_history",),
+                                 ("dq_snapshot_evaluation_summary",),("dq_snapshot_rule_history",)])
+        shared = ["evaluations", "distinct_rules", "passed_evaluations", "failed_evaluations", "pass_ratio",
+                  "row_rule_evaluations", "row_rule_violations", "row_rule_conforming",
+                  "weighted_violation_ratio", "weighted_compliance_ratio"]
+        expected = {
+            "dq_snapshot_rule_history": ["snapshot_cutoff", "run_id", "started_at", "rule_id", "asset", "column_name",
+                "dimension", "expectation_type", "empty_policy", "status", "rows_total", "rows_evaluated",
+                "rows_not_evaluated", "evaluation_ratio", "violations", "conforming_evaluations", "violation_ratio", "compliance_ratio"],
+            "dq_snapshot_asset_history": ["snapshot_cutoff", "run_id", "asset"] + shared,
+            "dq_snapshot_dimension_history": ["snapshot_cutoff", "run_id", "dimension"] + shared,
+            "dq_snapshot_evaluation_summary": ["snapshot_cutoff", "run_id"] + shared,
+        }
+        for view, columns in expected.items():
+            with self.subTest(view=view):
+                self.assertEqual([r[0] for r in self.query("DESCRIBE "+view)], columns)
+                self.assertEqual(self.query("SELECT DISTINCT run_id FROM "+view), [("snapshot",)])
+                self.assertEqual(self.query("SELECT count(*) FROM "+view+" WHERE snapshot_cutoff IS NULL"), [(0,)])
+                self.assertFalse(any(word in c.lower() for c in columns for word in ("improved", "degraded", "trend", "delta", "growth", "severity", "better", "worse")))
+
+    def test_temporal_denominators_row_rule_dimension_and_summary(self):
+        self.change("UPDATE dq_rule_results SET asset='card' WHERE asset='loan'")
+        self.build()
+        self.assertEqual(self.query("SELECT rows_total,rows_evaluated,rows_not_evaluated,violations,compliance_ratio,status FROM dq_snapshot_rule_history WHERE rule_id='CAR-VAL-002'"), [(10,8,2,2,0.75,"FAILED")])
+        self.assertEqual(self.query("SELECT asset,evaluations,row_rule_evaluations,row_rule_violations FROM dq_snapshot_asset_history"), [("card",2,18,2)])
+        self.assertEqual(self.query("SELECT dimension,row_rule_evaluations,row_rule_violations FROM dq_snapshot_dimension_history ORDER BY dimension"), [("uniqueness",10,0),("validity",8,2)])
+        self.assertEqual(self.query("SELECT run_id,evaluations,row_rule_evaluations,row_rule_violations FROM dq_snapshot_evaluation_summary"), [("snapshot",2,18,2)])
+
+    def test_temporal_same_cutoff_runs_remain_independent(self):
+        self.change("INSERT INTO dq_runs VALUES ('snapshot-second','2026-01-04','snapshot','1998-12-31','snapshot')")
+        self.change("INSERT INTO dq_rule_results SELECT 'snapshot-second',rule_id,asset,column_name,dimension,expectation_type,empty_policy,'PASSED',rows_total,rows_evaluated,0,1.0 FROM dq_rule_results WHERE run_id='snapshot'")
+        self.build()
+        for view, count in (("dq_snapshot_rule_history",4),("dq_snapshot_asset_history",4),
+                            ("dq_snapshot_dimension_history",4),("dq_snapshot_evaluation_summary",2)):
+            with self.subTest(view=view):
+                self.assertEqual(self.query("SELECT DISTINCT run_id FROM "+view+" ORDER BY run_id"), [("snapshot",),("snapshot-second",)])
+                self.assertEqual(self.query("SELECT count(*) FROM "+view), [(count,)])
+        self.assertEqual(self.query("SELECT run_id,violations,status FROM dq_snapshot_rule_history WHERE rule_id='CAR-VAL-002' ORDER BY run_id"), [("snapshot",2,"FAILED"),("snapshot-second",0,"PASSED")])
+
+    def test_temporal_acceptance_queries_a_to_g(self):
+        self.change("INSERT INTO dq_runs VALUES ('snapshot-second','2026-01-04','snapshot','1998-12-31','snapshot')")
+        self.change("INSERT INTO dq_rule_results SELECT 'snapshot-second',rule_id,asset,column_name,dimension,expectation_type,empty_policy,status,rows_total,rows_evaluated,violations,compliance_ratio FROM dq_rule_results WHERE run_id='snapshot'")
+        self.build()
+        doc=(Path(__file__).resolve().parents[1]/"docs/architecture/temporal_observability.md").read_text(encoding="utf-8")
+        queries=doc.split("```sql\n")[1].split("```")[0].split(';')[:7]
+        parameters={"A":["CAR-VAL-002"],"B":["card"],"C":["validity"]}
+        results=[self.query(q,parameters.get(label)) for label,q in zip('ABCDEFG',queries)]
+        self.assertEqual([len(r) for r in results],[2,2,2,2,2,0,1])
+        self.assertEqual(results[6][0][1],2)
 
     def test_acceptance_queries_a_to_h(self):
         self.build()
