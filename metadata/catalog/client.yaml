@@ -1,0 +1,19 @@
+asset:
+  name: client
+  source_file: client.asc
+  description: Each record describes characteristics of a client.
+  evidence: &source_evidence
+    type: source_documentation
+    document: Financial Data description.pdf
+columns:
+  - name: client_id
+    description: Record identifier.
+    evidence: *source_evidence
+  - name: birth_number
+    description: Identification of the client; the documented encoding includes date of birth and distinguishes men and women.
+    documented_format: YYMMDD for men; YYMM+50DD for women
+    evidence: *source_evidence
+  - name: district_id
+    description: Address of the client.
+    evidence: *source_evidence
+

@@ -1,0 +1,26 @@
+asset:
+  name: card
+  source_file: card.asc
+  description: Each record describes a credit card issued to an account.
+  evidence: &source_evidence
+    type: source_documentation
+    document: Financial Data description.pdf
+columns:
+  - name: card_id
+    description: Record identifier.
+    evidence: *source_evidence
+  - name: disp_id
+    description: Disposition to an account.
+    evidence: *source_evidence
+  - name: type
+    description: Type of card.
+    documented_values:
+      junior: Junior card type.
+      classic: Classic card type.
+      gold: Gold card type.
+    evidence: *source_evidence
+  - name: issued
+    description: Issue date.
+    documented_format: YYMMDD
+    evidence: *source_evidence
+

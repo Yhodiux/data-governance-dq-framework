@@ -1,0 +1,32 @@
+asset:
+  name: order
+  source_file: order.asc
+  description: Each record describes characteristics of a permanent payment order.
+  evidence: &source_evidence
+    type: source_documentation
+    document: Financial Data description.pdf
+columns:
+  - name: order_id
+    description: Record identifier.
+    evidence: *source_evidence
+  - name: account_id
+    description: Account for which the order is issued.
+    evidence: *source_evidence
+  - name: bank_to
+    description: Bank of the recipient; each bank has a unique two-letter code.
+    evidence: *source_evidence
+  - name: account_to
+    description: Account of the recipient.
+    evidence: *source_evidence
+  - name: amount
+    description: Debited amount.
+    evidence: *source_evidence
+  - name: k_symbol
+    description: Characterization of the payment.
+    documented_values:
+      POJISTNE: Insurance payment.
+      SIPO: Household payment.
+      LEASING: Leasing payment.
+      UVER: Loan payment.
+    evidence: *source_evidence
+

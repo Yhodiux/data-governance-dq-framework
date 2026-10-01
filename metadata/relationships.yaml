@@ -1,0 +1,68 @@
+relationships:
+  - name: disposition_to_client
+    from:
+      asset: disp
+      column: client_id
+    to:
+      asset: client
+      column: client_id
+    evidence: &source_evidence
+      type: source_documentation
+      document: Financial Data description.pdf
+  - name: disposition_to_account
+    from:
+      asset: disp
+      column: account_id
+    to:
+      asset: account
+      column: account_id
+    evidence: *source_evidence
+  - name: permanent_order_to_account
+    from:
+      asset: order
+      column: account_id
+    to:
+      asset: account
+      column: account_id
+    evidence: *source_evidence
+  - name: transaction_to_account
+    from:
+      asset: trans
+      column: account_id
+    to:
+      asset: account
+      column: account_id
+    evidence: *source_evidence
+  - name: loan_to_account
+    from:
+      asset: loan
+      column: account_id
+    to:
+      asset: account
+      column: account_id
+    evidence: *source_evidence
+  - name: credit_card_to_disposition
+    from:
+      asset: card
+      column: disp_id
+    to:
+      asset: disp
+      column: disp_id
+    evidence: *source_evidence
+  - name: account_to_district
+    from:
+      asset: account
+      column: district_id
+    to:
+      asset: district
+      column: A1
+    evidence: *source_evidence
+  - name: client_to_district
+    from:
+      asset: client
+      column: district_id
+    to:
+      asset: district
+      column: A1
+    evidence: *source_evidence
+

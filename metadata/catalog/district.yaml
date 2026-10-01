@@ -1,0 +1,57 @@
+asset:
+  name: district
+  source_file: district.asc
+  description: Each record describes demographic characteristics of a district.
+  evidence: &source_evidence
+    type: source_documentation
+    document: Financial Data description.pdf
+columns:
+  - name: A1
+    description: District code.
+    evidence: *source_evidence
+  - name: A2
+    description: District name.
+    evidence: *source_evidence
+  - name: A3
+    description: Region.
+    evidence: *source_evidence
+  - name: A4
+    description: Number of inhabitants.
+    evidence: *source_evidence
+  - name: A5
+    description: Number of municipalities with fewer than 499 inhabitants.
+    evidence: *source_evidence
+  - name: A6
+    description: Number of municipalities with 500-1999 inhabitants.
+    evidence: *source_evidence
+  - name: A7
+    description: Number of municipalities with 2000-9999 inhabitants.
+    evidence: *source_evidence
+  - name: A8
+    description: Number of municipalities with more than 10000 inhabitants.
+    evidence: *source_evidence
+  - name: A9
+    description: Number of cities.
+    evidence: *source_evidence
+  - name: A10
+    description: Ratio of urban inhabitants.
+    evidence: *source_evidence
+  - name: A11
+    description: Average salary.
+    evidence: *source_evidence
+  - name: A12
+    description: Unemployment rate in 1995.
+    evidence: *source_evidence
+  - name: A13
+    description: Unemployment rate in 1996.
+    evidence: *source_evidence
+  - name: A14
+    description: Number of entrepreneurs per 1000 inhabitants.
+    evidence: *source_evidence
+  - name: A15
+    description: Number of committed crimes in 1995.
+    evidence: *source_evidence
+  - name: A16
+    description: Number of committed crimes in 1996.
+    evidence: *source_evidence
+

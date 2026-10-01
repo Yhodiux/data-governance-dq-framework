@@ -42,12 +42,25 @@ python -m src.profiling
 
 Use `python -m src.profiling --raw <path>` only when profiling another controlled RAW location. Each run writes a JSON result to `data/results/profiling/`. Profiling measurements are evidence, not automatic Data Quality findings or rules.
 
+## Metadata catalog
+
+Step 2 provides version-controlled YAML definitions for all manifest-declared assets, their documented columns and values, and source-supported relationships. Every definition identifies its source-documentation evidence; profiling measurements and future governance decisions remain separate.
+
+Validate catalog structure and RAW-header consistency from the repository root:
+
+```bash
+python -m src.catalog
+```
+
+The command reads only RAW headers and writes a JSON execution record to `data/results/catalog/`. Catalog validation checks metadata consistency; it is not business Data Quality validation.
+
 In this project:
 
 - **SOURCE** means the original external dataset, unchanged and outside version control.
 - **RAW** means exact source files published only after validation against the dataset manifest.
 - **PROFILING RESULTS** are physical measurements produced from RAW.
-- **GOVERNANCE METADATA**, **TRUSTED**, and business **DATA QUALITY** capabilities are not implemented yet.
+- **SOURCE METADATA CATALOG** contains definitions supported by source documentation.
+- **GOVERNANCE DECISIONS**, **TRUSTED**, and business **DATA QUALITY** capabilities are not implemented yet.
 
 ## Planned capabilities
 
@@ -64,6 +77,6 @@ These capabilities are planned and have not yet been implemented.
 
 ## Current status
 
-**Step 1B - Local Data Profiling.** The source baseline, manifest-driven SOURCE-to-RAW ingestion, and physical RAW profiling are implemented. Business Data Quality execution, scoring, lineage processing, governance decisions, trusted-layer transformations, dashboards, and cloud components have not been implemented.
+**Step 2 - Metadata Catalog.** The source baseline, local ingestion, physical RAW profiling, source-documentation catalog, and catalog validator are implemented. Business Data Quality execution, scoring, lineage processing, governance decisions, trusted-layer transformations, dashboards, and cloud components have not been implemented.
 
-See [`docs/source/dataset_assessment.md`](docs/source/dataset_assessment.md) for the source baseline, [`config/dataset_manifest.yaml`](config/dataset_manifest.yaml) for the expected files, [`docs/architecture/local_ingestion.md`](docs/architecture/local_ingestion.md) for ingestion, and [`docs/architecture/local_profiling.md`](docs/architecture/local_profiling.md) for metric definitions and parser limitations.
+See [`docs/source/dataset_assessment.md`](docs/source/dataset_assessment.md) for the source baseline, [`config/dataset_manifest.yaml`](config/dataset_manifest.yaml) for the expected files, [`docs/architecture/local_ingestion.md`](docs/architecture/local_ingestion.md) for ingestion, [`docs/architecture/local_profiling.md`](docs/architecture/local_profiling.md) for profiling, and [`docs/architecture/metadata_catalog.md`](docs/architecture/metadata_catalog.md) for catalog structure and boundaries.

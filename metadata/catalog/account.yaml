@@ -1,0 +1,26 @@
+asset:
+  name: account
+  source_file: account.asc
+  description: Each record describes static characteristics of an account.
+  evidence: &source_evidence
+    type: source_documentation
+    document: Financial Data description.pdf
+columns:
+  - name: account_id
+    description: Identification of the account.
+    evidence: *source_evidence
+  - name: district_id
+    description: Location of the branch.
+    evidence: *source_evidence
+  - name: frequency
+    description: Frequency of issuance of statements.
+    documented_values:
+      POPLATEK MESICNE: Monthly issuance.
+      POPLATEK TYDNE: Weekly issuance.
+      POPLATEK PO OBRATU: Issuance after transaction.
+    evidence: *source_evidence
+  - name: date
+    description: Date of creation of the account.
+    documented_format: YYMMDD
+    evidence: *source_evidence
+

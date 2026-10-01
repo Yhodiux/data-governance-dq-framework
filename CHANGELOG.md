@@ -8,6 +8,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Step 2 source-documentation metadata catalog for eight Berka assets and their relationships.
+- Local catalog validator for manifest coverage, required structure, RAW-header consistency, uniqueness, and relationship endpoints.
+- JSON execution records for catalog validation runs.
+- Focused catalog-validation tests and metadata catalog architecture documentation.
 - Step 1B local DuckDB profiling over manifest-declared RAW files.
 - Physical table and column metrics with deterministic sample values.
 - JSON profiling execution results for successful and failed runs.

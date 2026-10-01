@@ -1,0 +1,21 @@
+asset:
+  name: disp
+  source_file: disp.asc
+  description: Each record relates a client with an account.
+  evidence: &source_evidence
+    type: source_documentation
+    document: Financial Data description.pdf
+columns:
+  - name: disp_id
+    description: Record identifier.
+    evidence: *source_evidence
+  - name: client_id
+    description: Identification of a client.
+    evidence: *source_evidence
+  - name: account_id
+    description: Identification of an account.
+    evidence: *source_evidence
+  - name: type
+    description: Type of disposition (owner/user); the source states that only an owner can issue permanent orders and ask for a loan.
+    evidence: *source_evidence
+

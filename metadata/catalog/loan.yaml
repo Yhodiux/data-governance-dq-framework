@@ -1,0 +1,36 @@
+asset:
+  name: loan
+  source_file: loan.asc
+  description: Each record describes a loan granted for a given account.
+  evidence: &source_evidence
+    type: source_documentation
+    document: Financial Data description.pdf
+columns:
+  - name: loan_id
+    description: Record identifier.
+    evidence: *source_evidence
+  - name: account_id
+    description: Identification of the account.
+    evidence: *source_evidence
+  - name: date
+    description: Date when the loan was granted.
+    documented_format: YYMMDD
+    evidence: *source_evidence
+  - name: amount
+    description: Amount of money.
+    evidence: *source_evidence
+  - name: duration
+    description: Duration of the loan.
+    evidence: *source_evidence
+  - name: payments
+    description: Monthly payments.
+    evidence: *source_evidence
+  - name: status
+    description: Status of paying off the loan.
+    documented_values:
+      A: Contract finished, no problems.
+      B: Contract finished, loan not paid.
+      C: Running contract, OK so far.
+      D: Running contract, client in debt.
+    evidence: *source_evidence
+

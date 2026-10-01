@@ -1,0 +1,57 @@
+asset:
+  name: trans
+  source_file: trans.asc
+  description: Each record describes one transaction on an account.
+  evidence: &source_evidence
+    type: source_documentation
+    document: Financial Data description.pdf
+columns:
+  - name: trans_id
+    description: Record identifier.
+    evidence: *source_evidence
+  - name: account_id
+    description: Account with which the transaction deals.
+    evidence: *source_evidence
+  - name: date
+    description: Date of transaction.
+    documented_format: YYMMDD
+    evidence: *source_evidence
+  - name: type
+    description: Credit or withdrawal transaction.
+    documented_values:
+      PRIJEM: Credit.
+      VYDAJ: Withdrawal.
+    evidence: *source_evidence
+  - name: operation
+    description: Mode of transaction.
+    documented_values:
+      VYBER KARTOU: Credit card withdrawal.
+      VKLAD: Credit in cash.
+      PREVOD Z UCTU: Collection from another bank.
+      VYBER: Withdrawal in cash.
+      PREVOD NA UCET: Remittance to another bank.
+    evidence: *source_evidence
+  - name: amount
+    description: Amount of money.
+    evidence: *source_evidence
+  - name: balance
+    description: Balance after transaction.
+    evidence: *source_evidence
+  - name: k_symbol
+    description: Characterization of the transaction.
+    documented_values:
+      POJISTNE: Insurance payment.
+      SLUZBY: Payment for statement.
+      UROK: Interest credited.
+      SANKC. UROK: Sanction interest if the balance is negative.
+      SIPO: Household payment.
+      DUCHOD: Old-age pension.
+      UVER: Loan payment.
+    evidence: *source_evidence
+  - name: bank
+    description: Bank of the partner; each bank has a unique two-letter code.
+    evidence: *source_evidence
+  - name: account
+    description: Account of the partner.
+    evidence: *source_evidence
+
