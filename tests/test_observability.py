@@ -313,5 +313,85 @@ class ObservabilityTests(unittest.TestCase):
         self.assertIn("raw or trusted", execution["errors"][0]["message"])
 
 
+    def snapshot_record(self, run_id="snapshot-run", cutoff="1995-12-31", **kwargs):
+        record = self.run_record(run_id, data_zone="snapshot", data_path="/custom/snapshot", **kwargs)
+        record["snapshot_cutoff"] = cutoff
+        return record
+
+    def test_snapshot_cutoff_is_date_and_legacy_is_null(self) -> None:
+        self.write_record("legacy.json", self.run_record("legacy"))
+        self.write_record("snapshot.json", self.snapshot_record())
+        self.assertEqual(self.build()["status"], "SUCCESS")
+        rows = self.query("SELECT run_id, data_zone, data_path, snapshot_cutoff FROM dq_runs ORDER BY run_id")
+        self.assertEqual(rows[0], ("legacy", None, None, None))
+        self.assertEqual(str(rows[1][3]), "1995-12-31")
+        self.assertEqual(dict((r[0], r[1]) for r in self.query("DESCRIBE dq_runs"))["snapshot_cutoff"], "DATE")
+
+    def test_raw_trusted_null_or_absent_cutoff_preserved(self) -> None:
+        for index, (zone, explicit) in enumerate((('raw', False), ('raw', True), ('trusted', False), ('trusted', True))):
+            record = self.run_record(str(index), data_zone=zone, data_path="/data")
+            if explicit:
+                record["snapshot_cutoff"] = None
+            self.write_record(f"{index}.json", record)
+        self.assertEqual(self.build()["status"], "SUCCESS")
+        self.assertEqual(self.query("SELECT count(*) FROM dq_runs WHERE snapshot_cutoff IS NULL")[0][0], 4)
+
+    def test_multiple_cutoffs_preserve_40_historical_results_and_do_not_duplicate(self) -> None:
+        historical = [self.rule_result(f"RULE-{i:03}") for i in range(20)]
+        self.write_record("legacy.json", self.run_record("legacy", rules=historical))
+        self.write_record("trusted.json", self.run_record("trusted", rules=historical, data_zone="trusted", data_path="/trusted"))
+        self.assertEqual(self.build()["status"], "SUCCESS")
+        before = self.query("SELECT * FROM dq_rule_results ORDER BY run_id, rule_id")
+        for year in range(1993, 1999):
+            self.write_record(f"{year}.json", self.snapshot_record(str(year), f"{year}-12-31", rules=historical))
+        for _ in range(2):
+            result = self.build()
+            self.assertEqual(result["status"], "SUCCESS")
+            self.assertEqual(result["dq_runs_loaded"], 8)
+            self.assertEqual(result["dq_rule_results_loaded"], 160)
+            self.assertEqual(before, self.query("SELECT * FROM dq_rule_results WHERE run_id IN ('legacy', 'trusted') ORDER BY run_id, rule_id"))
+        self.assertEqual(self.query("SELECT count(DISTINCT snapshot_cutoff) FROM dq_runs")[0][0], 6)
+
+    def test_failed_before_evaluation_null_cutoff_or_missing_path_is_preserved(self) -> None:
+        for index, cutoff in enumerate((None, "1995-12-31")):
+            record = self.snapshot_record(str(index), cutoff, status="FAILED", rules=[])
+            record["data_path"] = None
+            self.write_record(f"{index}.json", record)
+        self.assertEqual(self.build()["status"], "SUCCESS")
+        self.assertEqual(self.query("SELECT count(*) FROM dq_runs")[0][0], 2)
+
+    def test_snapshot_invalid_identity_preserves_previous_database(self) -> None:
+        self.write_record("valid.json", self.run_record())
+        self.assertEqual(self.build()["status"], "SUCCESS")
+        original = hashlib.sha256(self.database.read_bytes()).hexdigest()
+        for cutoff in (None, "", "1995-2-01", "1995-02-30", 1995):
+            self.write_record("invalid.json", self.snapshot_record(cutoff=cutoff))
+            self.assertEqual(self.build()["status"], "FAILED")
+            self.assertEqual(original, hashlib.sha256(self.database.read_bytes()).hexdigest())
+
+    def test_failed_null_cutoff_after_evaluation_is_rejected(self) -> None:
+        record = self.snapshot_record(cutoff=None, status="FAILED")
+        self.write_record("invalid.json", record)
+        self.assertEqual(self.build()["status"], "FAILED")
+
+    def test_failed_null_cutoff_requires_error_evidence(self) -> None:
+        record = self.snapshot_record(cutoff=None, status="FAILED", rules=[])
+        record["execution_errors"] = []
+        self.write_record("invalid.json", record)
+        self.assertEqual(self.build()["status"], "FAILED")
+
+    def test_non_snapshot_cutoff_is_rejected(self) -> None:
+        for zone in (None, "raw", "trusted"):
+            record = self.run_record(data_zone=zone, data_path="/data" if zone else None)
+            record["snapshot_cutoff"] = "1995-12-31"
+            self.write_record("invalid.json", record)
+            self.assertEqual(self.build()["status"], "FAILED")
+
+    def test_snapshot_failed_after_evaluation_with_valid_cutoff_is_preserved(self) -> None:
+        self.write_record("failed.json", self.snapshot_record(status="FAILED"))
+        self.assertEqual(self.build()["status"], "SUCCESS")
+        self.assertEqual(self.query("SELECT count(*) FROM dq_rule_results")[0][0], 1)
+
+
 if __name__ == "__main__":
     unittest.main()

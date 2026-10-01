@@ -8,6 +8,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Step 6B snapshot DQ revalidation with the existing rules and unchanged operator semantics.
+- Explicit snapshot cutoff identity, configuration failure evidence, and preserved RAW/TRUSTED defaults.
+- Nullable snapshot cutoff dates in observability with legacy and pre-evaluation failure compatibility.
+- Synthetic tests for snapshot execution, immutability, equivalent rule results, and historical preservation.
 - Step 6A metadata-driven historical snapshots from read-only TRUSTED with inclusive ISO cutoffs.
 - Explicit YYMMDD century metadata, dependency resolution, and temporal/reference construction validation.
 - Physical row preservation, safe snapshot rebuilds, and replay execution evidence.

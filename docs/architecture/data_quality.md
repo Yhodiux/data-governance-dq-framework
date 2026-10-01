@@ -11,9 +11,43 @@ RAW remains the default for backward-compatible execution. TRUSTED revalidation 
 ```bash
 python -m src.dq
 python -m src.dq --data-path data/trusted --data-zone trusted
+python -m src.dq --data-path data/snapshots/1995-12-31 --data-zone snapshot --snapshot-cutoff 1995-12-31
 ```
 
-`data_path` selects the physical input and `data_zone` records its semantic label (`raw` or `trusted`). The engine does not infer the label from a directory name. Both zones use exactly the same rule files, metadata validation, operators, empty policies, and PASS/FAIL semantics; there is no TRUSTED-specific rule branch.
+`data_path` selects the physical input and `data_zone` records its semantic label (`raw`, `trusted`, or `snapshot`). The engine does not infer the label from a directory name. All zones use exactly the same rule files, metadata validation, operators, empty policies, and PASS/FAIL semantics; there are no zone-specific rule branches.
+
+## Snapshot DQ revalidation — Step 6B
+
+`DQConfig` adds an optional final `snapshot_cutoff: str | None = None` field,
+preserving existing constructors. `None` is not a valid `data_path` for DQ evaluation;
+it represents an omitted explicit snapshot path so a `FAILED` execution record
+can be written. The engine rejects `None` before loading or evaluating rules.
+The CLI retains RAW and `data/raw` defaults, tracks explicit `--data-path` use,
+and requires that argument for snapshot execution. Python callers must provide
+a non-null data path. The cutoff is not inferred from that path.
+
+Snapshot execution requires an explicit, strictly formatted ISO `YYYY-MM-DD`
+cutoff representing a real date. RAW/TRUSTED reject any supplied cutoff, including
+an empty string. Every new execution record includes `snapshot_cutoff`: null for
+RAW/TRUSTED, and the validated string for snapshot. Historical JSON is unchanged.
+
+The cutoff is declared execution identity, not a filter or an additional DQ rule.
+DQ evaluates all supplied rows, including any dates later than that declaration.
+No replay record discovery, snapshot rebuild, provenance hashes, or cryptographic
+identity verification is implemented. For demonstrations, paths are checked
+externally against successful Step 6A execution records before DQ runs.
+
+Invalid configuration produces execution `FAILED` before loading/evaluating
+rules. An invalid cutoff is stored as null and its rejected value is represented
+in `execution_errors`. A missing explicit snapshot path is recorded as null;
+it never falls back to RAW. A valid cutoff remains recorded if another check
+fails. Files with only a header retain existing zero-row semantics: rules pass
+with zero violations, no samples, and null compliance ratio.
+
+Differences in violations or compliance ratios between snapshots do not
+automatically imply Data Quality improvement or deterioration: the evaluated
+population changes. Step 6B records results by declared cutoff without interpreting
+trends. It does not change rules, operators, standardization, or replay.
 
 Profiling and Data Quality remain distinct:
 

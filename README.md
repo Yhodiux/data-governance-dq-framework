@@ -74,6 +74,19 @@ python -m src.dq --data-path data/trusted --data-zone trusted
 
 New DQ records include the explicit zone label and resolved physical path. Selecting TRUSTED changes only the input location and execution metadata; rule semantics are identical and DQ never transforms its input.
 
+Step 6B reuses the same 20 rules over an existing historical snapshot:
+
+```bash
+python -m src.dq --data-path data/snapshots/1995-12-31 --data-zone snapshot --snapshot-cutoff 1995-12-31
+```
+
+Snapshot requires an explicit input path and a valid ISO cutoff. The cutoff is
+declared identity, never inferred from a directory name or used to filter rows.
+New RAW/TRUSTED records store `snapshot_cutoff: null`; historical JSON is unchanged.
+DQ does not rebuild snapshots or verify provenance. Differences in violations or
+compliance ratios between cutoffs do not automatically imply improvement or
+deterioration because the evaluated population changes.
+
 ## Local DQ observability
 
 Step 4 rebuilds a queryable DuckDB history from the immutable DQ execution JSON records:
@@ -82,7 +95,7 @@ Step 4 rebuilds a queryable DuckDB history from the immutable DQ execution JSON 
 python -m src.observability
 ```
 
-The output is `data/results/observability/dq_history.duckdb`, containing `dq_runs` and `dq_rule_results`. Each build validates the complete JSON input set and publishes a full replacement atomically, so repeated builds do not duplicate rows. Zone-aware runs retain `data_zone` and `data_path`; legacy runs preserve these as unknown (`NULL`). The builder does not rerun DQ or read RAW.
+The output is `data/results/observability/dq_history.duckdb`, containing `dq_runs` and `dq_rule_results`. Each build validates the complete JSON input set and publishes a full replacement atomically, so repeated builds do not duplicate rows. Zone-aware runs retain `data_zone` and `data_path`, and snapshot runs retain declared `snapshot_cutoff` as a nullable date. Legacy runs preserve unknown identity as `NULL`. The builder does not rerun DQ or read input datasets.
 
 This is execution history, not a global DQ score or proof of improvement or deterioration. Repeated runs over unchanged RAW may naturally contain identical results.
 
@@ -123,7 +136,7 @@ The project is expected to add these capabilities incrementally:
 - lineage and traceability; and
 - reporting or dashboard views over results.
 
-Profiling, cataloging, DQ validation, execution traceability, policy-driven standardization and TRUSTED publication, post-standardization DQ revalidation, and historical snapshot replay are implemented. Scoring and reporting/dashboard views remain planned.
+Profiling, cataloging, DQ validation, execution traceability, policy-driven standardization and TRUSTED publication, post-standardization DQ revalidation, historical snapshot replay, and snapshot DQ revalidation are implemented. Scoring and reporting/dashboard views remain planned.
 
 ## Historical snapshots
 
@@ -144,6 +157,6 @@ of historical knowledge. See [historical replay architecture](docs/architecture/
 
 ## Current status
 
-**Step 6A - Historical Snapshot Builder.** Metadata-driven replay builds historical snapshots from TRUSTED. The same DQ engine can validate RAW or TRUSTED explicitly, and observability preserves zone-aware and legacy execution history. DQ on snapshots, temporal observability, completeness, scoring, broader governance decisions, dashboards, and cloud components have not been implemented.
+**Step 6B - Snapshot DQ Revalidation.** The same DQ engine validates RAW, TRUSTED, or existing historical snapshots with declared cutoff identity. Observability preserves snapshot identity and legacy execution history. Temporal observability, completeness, scoring, broader governance decisions, dashboards, and cloud components have not been implemented.
 
 See [`docs/source/dataset_assessment.md`](docs/source/dataset_assessment.md) for the source baseline, [`config/dataset_manifest.yaml`](config/dataset_manifest.yaml) for expected files, [`docs/architecture/local_ingestion.md`](docs/architecture/local_ingestion.md) for ingestion, [`docs/architecture/local_profiling.md`](docs/architecture/local_profiling.md) for profiling, [`docs/architecture/metadata_catalog.md`](docs/architecture/metadata_catalog.md) for the catalog, [`docs/architecture/data_quality.md`](docs/architecture/data_quality.md) for DQ semantics, [`docs/architecture/dq_observability.md`](docs/architecture/dq_observability.md) for history, and [`docs/architecture/standardization_trusted.md`](docs/architecture/standardization_trusted.md) for TRUSTED publication.

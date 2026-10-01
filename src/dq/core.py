@@ -9,7 +9,7 @@ import time
 import uuid
 from collections import Counter
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -33,7 +33,7 @@ DIMENSION_EXPECTATIONS = {
 }
 EMPTY_POLICIES = {"evaluate", "ignore"}
 SAMPLE_SIZE = 5
-DATA_ZONES = {"raw", "trusted"}
+DATA_ZONES = {"raw", "trusted", "snapshot"}
 
 
 @dataclass(frozen=True)
@@ -42,9 +42,21 @@ class DQConfig:
     catalog_path: Path
     relationships_path: Path
     rules_path: Path
-    data_path: Path
+    data_path: Path | None
     data_zone: str
     results_path: Path
+    snapshot_cutoff: str | None = None
+
+
+def validate_snapshot_cutoff(value: Any) -> str:
+    """Validate declared ISO identity without reading or filtering dataset dates."""
+    if not isinstance(value, str) or not re.fullmatch(r"[0-9]{4}-[0-9]{2}-[0-9]{2}", value):
+        raise ValueError(f"snapshot_cutoff must use ISO YYYY-MM-DD; rejected {value!r}")
+    try:
+        date.fromisoformat(value)
+    except ValueError as exc:
+        raise ValueError(f"snapshot_cutoff must be a real date; rejected {value!r}") from exc
+    return value
 
 
 def utc_now() -> str:
@@ -448,7 +460,8 @@ def run_dq(config: DQConfig) -> dict[str, Any]:
         "elapsed_seconds": None,
         "status": "FAILED",
         "data_zone": config.data_zone,
-        "data_path": str(config.data_path.resolve()),
+        "data_path": str(config.data_path.resolve()) if config.data_path is not None else None,
+        "snapshot_cutoff": None,
         "rules_total": 0,
         "rules_passed": 0,
         "rules_failed": 0,
@@ -462,6 +475,14 @@ def run_dq(config: DQConfig) -> dict[str, Any]:
                 f"Unsupported data_zone {config.data_zone}; expected one of: "
                 + ", ".join(sorted(DATA_ZONES))
             )
+        if config.data_zone == "snapshot":
+            record["snapshot_cutoff"] = validate_snapshot_cutoff(config.snapshot_cutoff)
+        elif config.snapshot_cutoff is not None:
+            raise ValueError(
+                f"snapshot_cutoff is only valid for snapshot; rejected {config.snapshot_cutoff!r}"
+            )
+        if config.data_path is None:
+            raise ValueError("data_path cannot be None")
         manifest_entries = load_manifest(config.manifest_path)
         manifest_files = {str(entry["name"]) for entry in manifest_entries}
         delimiter, quote = load_physical_format(config.manifest_path)

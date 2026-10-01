@@ -20,9 +20,9 @@ The DQ JSON files remain the immutable source evidence. DuckDB is a derived anal
 
 ## Analytical tables
 
-`dq_runs` stores one row per DQ execution: identifiers and timestamps normalized to UTC, elapsed time, technical status, rule counts, execution-error count, source JSON filename, and nullable `data_zone`/`data_path` execution metadata.
+`dq_runs` stores one row per DQ execution: identifiers and timestamps normalized to UTC, elapsed time, technical status, rule counts, execution-error count, source JSON filename, and nullable `data_zone`/`data_path` execution metadata. Step 6B adds nullable `snapshot_cutoff DATE` without changing `dq_rule_results`.
 
-New DQ records preserve their explicit `raw` or `trusted` zone and resolved physical path. Historical records created before zone metadata remain valid and are loaded with SQL `NULL` for both columns. The builder does not infer that a legacy run was RAW merely because RAW used to be the default.
+New DQ records preserve their explicit `raw`, `trusted`, or `snapshot` zone and resolved physical path. Snapshot identity is projected from a validated ISO cutoff into `snapshot_cutoff DATE`; RAW/TRUSTED and legacy records retain SQL `NULL`. Historical records created before zone metadata remain valid and are loaded with SQL `NULL` for zone and path too. The builder does not infer that a legacy run was RAW merely because RAW used to be the default, or infer a cutoff from a directory name. Historical JSON is never rewritten.
 
 `dq_rule_results` stores the factual rule results contained by each execution: rule identity and scope, operator metadata, status, row counts, violations, compliance ratio, deterministic sample violations as JSON, and source filename. `(run_id, rule_id)` is the primary key.
 
@@ -40,6 +40,15 @@ The builder validates required run and rule-result fields, usable value types, I
 
 Consistency rules that assume complete execution are not imposed on technically failed DQ runs; their available evidence is preserved without inventing missing results.
 
+Snapshot runs require a strictly formatted real ISO cutoff. A null or absent
+cutoff is accepted only for a `FAILED` snapshot execution before evaluation:
+zero declared/passed/failed rules, no rule results, and nonempty execution errors.
+The same narrow exception permits a null path when the CLI lacked an explicit
+snapshot input. Runs with any rule results require a valid cutoff and nonempty
+path, even if technically failed. RAW/TRUSTED and legacy records accept absent
+or null cutoffs; a non-null cutoff outside snapshot is rejected. Invalid non-null
+dates are never accepted as projected identity.
+
 Malformed JSON and structurally unsafe records are never skipped. One invalid input fails the entire build with its filename and reason, preventing a misleading partial history.
 
 ## Atomic publication and traceability
@@ -52,4 +61,9 @@ Each builder invocation also writes a JSON execution record under `data/results/
 
 The history records executions; it does not create a global DQ score, weights, thresholds, or traffic-light rating. Repeated identical results over static RAW do not demonstrate improvement or deterioration. They only demonstrate that separate executions recorded the same facts.
 
-Temporal replay, incremental ingestion, source-version tracking, dashboards, remediation, and cloud publication remain possible future work and are not implemented.
+Violations and compliance ratios across snapshots do not automatically indicate
+improvement or deterioration because the evaluated population changes. Step 6B
+preserves declared cutoff metadata in execution history; it does not interpret
+trends or implement temporal analytical views. Temporal observability, incremental
+ingestion, source-version tracking, dashboards, remediation, and cloud publication
+remain outside this implementation.

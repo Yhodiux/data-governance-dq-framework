@@ -9,6 +9,12 @@ from pathlib import Path
 from .core import DQConfig, run_dq
 
 
+class ExplicitDataPath(argparse.Action):
+    def __call__(self, parser, namespace, values, option_string=None):
+        namespace.data_path = values
+        namespace.data_path_explicit = True
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Execute metadata-driven Data Quality rules against a data zone."
@@ -16,14 +22,20 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--data-path",
         type=Path,
+        action=ExplicitDataPath,
         default=Path("data/raw"),
         help="Physical directory containing the dataset (default: data/raw).",
     )
     parser.add_argument(
         "--data-zone",
-        choices=("raw", "trusted"),
+        choices=("raw", "trusted", "snapshot"),
         default="raw",
         help="Semantic zone label recorded with the execution (default: raw).",
+    )
+    parser.set_defaults(data_path_explicit=False)
+    parser.add_argument(
+        "--snapshot-cutoff",
+        help="Explicit ISO YYYY-MM-DD identity; required only for snapshot (not inferred).",
     )
     return parser
 
@@ -37,9 +49,13 @@ def main() -> int:
             catalog_path=Path("metadata/catalog"),
             relationships_path=Path("metadata/relationships.yaml"),
             rules_path=Path("metadata/dq_rules"),
-            data_path=args.data_path,
+            data_path=(
+                None if args.data_zone == "snapshot" and not args.data_path_explicit
+                else args.data_path
+            ),
             data_zone=args.data_zone,
             results_path=Path("data/results/dq"),
+            snapshot_cutoff=args.snapshot_cutoff,
         )
     )
     logging.info(

@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import tempfile
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 
 import yaml
@@ -168,7 +169,8 @@ class DQTests(unittest.TestCase):
         )
 
     def run_engine(
-        self, data_path: Path | None = None, data_zone: str = "raw"
+        self, data_path: Path | None = None, data_zone: str = "raw",
+        snapshot_cutoff: str | None = None,
     ) -> dict[str, object]:
         return run_dq(
             DQConfig(
@@ -179,6 +181,7 @@ class DQTests(unittest.TestCase):
                 data_path=data_path or self.raw,
                 data_zone=data_zone,
                 results_path=self.results,
+                snapshot_cutoff=snapshot_cutoff,
             )
         )
 
@@ -365,6 +368,151 @@ class DQTests(unittest.TestCase):
         self.assertEqual(execution["status"], "SUCCESS")
         self.assertEqual(execution["rule_results"][0]["status"], "FAILED")
         self.assertEqual(after, before)
+
+
+    def test_snapshot_valid_identity_and_no_directory_inference(self) -> None:
+        snapshot = self.root / "1993-12-31"
+        snapshot.mkdir()
+        for path in self.raw.glob("*.asc"):
+            (snapshot / path.name).write_bytes(path.read_bytes())
+        self.write_rules([self.allowed_rule()])
+        execution = self.run_engine(snapshot, "snapshot", "1995-12-31")
+        self.assertEqual(execution["status"], "SUCCESS")
+        self.assertEqual(execution["snapshot_cutoff"], "1995-12-31")
+        stored = json.loads(Path(execution["execution_record"]).read_text())
+        self.assertEqual(stored["snapshot_cutoff"], "1995-12-31")
+
+    def test_invalid_snapshot_cutoffs_fail_before_evaluation(self) -> None:
+        self.write_rules([self.allowed_rule()])
+        for cutoff in (None, "", "1995-2-01", "1995-02-30", "not-date", "1995-12-31T00:00:00", 1995):
+            with self.subTest(cutoff=cutoff), patch("src.dq.core.execute_rule") as operator:
+                execution = self.run_engine(self.raw, "snapshot", cutoff)
+                self.assertEqual(execution["status"], "FAILED")
+                self.assertIsNone(execution["snapshot_cutoff"])
+                self.assertEqual(execution["rules_total"], 0)
+                self.assertEqual(execution["rule_results"], [])
+                self.assertIn(repr(cutoff), execution["execution_errors"][0]["message"])
+                operator.assert_not_called()
+
+    def test_raw_trusted_reject_any_supplied_cutoff(self) -> None:
+        self.write_rules([self.allowed_rule()])
+        for zone in ("raw", "trusted"):
+            for cutoff in ("1995-12-31", ""):
+                with self.subTest(zone=zone, cutoff=cutoff), patch("src.dq.core.execute_rule") as operator:
+                    execution = self.run_engine(self.raw, zone, cutoff)
+                    self.assertEqual(execution["status"], "FAILED")
+                    self.assertIsNone(execution["snapshot_cutoff"])
+                    self.assertEqual(execution["rule_results"], [])
+                    operator.assert_not_called()
+
+    def test_raw_trusted_new_records_have_null_cutoff(self) -> None:
+        self.write_rules([self.allowed_rule()])
+        for zone in ("raw", "trusted"):
+            execution = self.run_engine(self.raw, zone)
+            self.assertEqual(execution["status"], "SUCCESS")
+            stored = json.loads(Path(execution["execution_record"]).read_text())
+            self.assertIn("snapshot_cutoff", stored)
+            self.assertIsNone(stored["snapshot_cutoff"])
+
+    def test_same_content_all_zones_has_identical_rule_results(self) -> None:
+        self.write_raw(b'id;value\n1;A\n2;A\n3;VYBER\n4;" "\n5;\n', b'id\nA\nB\n')
+        self.write_rules([self.allowed_rule("ignore"), self.regex_rule(), self.unique_rule(), self.reference_rule()])
+        raw = self.run_engine(self.raw, "raw")
+        trusted = self.run_engine(self.raw, "trusted")
+        snapshot = self.run_engine(self.raw, "snapshot", "1995-12-31")
+        self.assertEqual(snapshot["status"], "SUCCESS")
+        self.assertEqual(raw["rule_results"], trusted["rule_results"])
+        self.assertEqual(raw["rule_results"], snapshot["rule_results"])
+
+    def test_snapshot_preserves_whitespace_vyber_and_input(self) -> None:
+        self.write_raw(b'id;value\r\n1;VYBER\r\n2;" "\r\n', b'id\r\nA\r\n')
+        self.write_rules([self.allowed_rule("ignore")])
+        before = {p.name: (p.read_bytes(), p.stat().st_mtime_ns) for p in self.raw.glob("*.asc")}
+        execution = self.run_engine(self.raw, "snapshot", "1995-12-31")
+        self.assertEqual(execution["status"], "SUCCESS")
+        rule = execution["rule_results"][0]
+        self.assertEqual(rule["violations"], 2)
+        self.assertEqual(rule["sample_violations"], [" ", "VYBER"])
+        self.assertEqual(before, {p.name: (p.read_bytes(), p.stat().st_mtime_ns) for p in self.raw.glob("*.asc")})
+
+    def test_snapshot_header_only_preserves_semantics(self) -> None:
+        self.write_raw(b'id;value\n', b'id\n')
+        self.write_rules([self.allowed_rule(), self.regex_rule(), self.unique_rule(), self.reference_rule()])
+        execution = self.run_engine(self.raw, "snapshot", "1990-01-01")
+        self.assertEqual(execution["status"], "SUCCESS")
+        for rule in execution["rule_results"]:
+            self.assertEqual(rule["status"], "PASSED")
+            self.assertEqual(rule["rows_evaluated"], 0)
+            self.assertEqual(rule["violations"], 0)
+            self.assertIsNone(rule["compliance_ratio"])
+            self.assertEqual(rule["sample_violations"], [])
+
+    def test_snapshot_cutoff_does_not_filter_rows(self) -> None:
+        self.write_raw(b'id;value\n1;991231\n', b'id\n')
+        self.write_rules([self.regex_rule()])
+        execution = self.run_engine(self.raw, "snapshot", "1990-01-01")
+        self.assertEqual(execution["status"], "SUCCESS")
+        self.assertEqual(execution["rule_results"][0]["rows_evaluated"], 1)
+
+    def test_snapshot_cli_explicit_path_tracking(self) -> None:
+        parser = build_parser()
+        default = parser.parse_args([])
+        self.assertEqual(default.data_path, Path("data/raw"))
+        self.assertFalse(default.data_path_explicit)
+        missing = parser.parse_args(["--data-zone", "snapshot", "--snapshot-cutoff", "1995-12-31"])
+        self.assertFalse(missing.data_path_explicit)
+        explicit = parser.parse_args(["--data-zone", "snapshot", "--data-path", "custom", "--snapshot-cutoff", "1995-12-31"])
+        self.assertTrue(explicit.data_path_explicit)
+        self.assertEqual(explicit.snapshot_cutoff, "1995-12-31")
+
+    def test_snapshot_cli_missing_path_records_failed_execution(self) -> None:
+        from src.dq.__main__ import main
+        from src.dq.core import run_dq as real_run
+        observed = []
+
+        def fixture_run(config):
+            from dataclasses import replace
+            config = replace(config, results_path=self.results)
+            observed.append(real_run(config))
+            return observed[-1]
+
+        with patch("sys.argv", ["dq", "--data-zone", "snapshot", "--snapshot-cutoff", "1995-12-31"]), patch("src.dq.__main__.run_dq", side_effect=fixture_run), patch("src.dq.__main__.logging.basicConfig"):
+            self.assertEqual(main(), 1)
+        self.assertEqual(observed[0]["status"], "FAILED")
+        self.assertIsNone(observed[0]["data_path"])
+        self.assertEqual(observed[0]["rule_results"], [])
+        from src.observability import ObservabilityConfig, run_observability_build
+        result = run_observability_build(ObservabilityConfig(
+            self.results, self.root / "history.duckdb", self.root / "obs-runs"
+        ))
+        self.assertEqual(result["status"], "SUCCESS")
+        self.assertEqual(result["dq_rule_results_loaded"], 0)
+
+    def test_failed_cutoff_record_is_ingestible_by_observability(self) -> None:
+        from src.observability import ObservabilityConfig, run_observability_build
+        execution = self.run_engine(self.raw, "snapshot", "1995-02-30")
+        self.assertEqual(execution["status"], "FAILED")
+        result = run_observability_build(ObservabilityConfig(
+            self.results, self.root / "history.duckdb", self.root / "obs-runs"
+        ))
+        self.assertEqual(result["status"], "SUCCESS")
+        self.assertEqual(result["dq_runs_loaded"], 1)
+        self.assertEqual(result["dq_rule_results_loaded"], 0)
+
+
+    def test_raw_none_data_path_fails(self) -> None:
+        execution = run_dq(DQConfig(
+            manifest_path=self.manifest,
+            catalog_path=self.catalog,
+            relationships_path=self.relationships,
+            rules_path=self.rules,
+            data_path=None,
+            data_zone="raw",
+            results_path=self.results,
+        ))
+        self.assertEqual(execution["status"], "FAILED")
+        self.assertEqual(execution["rule_results"], [])
+        self.assertIn("data_path cannot be None", execution["execution_errors"][0]["message"])
 
 
 if __name__ == "__main__":

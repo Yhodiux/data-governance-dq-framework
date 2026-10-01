@@ -5,10 +5,11 @@ from __future__ import annotations
 import json
 import logging
 import os
+import re
 import time
 import uuid
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -159,9 +160,37 @@ def validate_run_record(document: Any, source: str) -> dict[str, Any]:
         )
     if has_data_zone:
         require_nonempty_text(document, "data_zone", source)
+        if document["data_zone"] not in {"raw", "trusted", "snapshot"}:
+            raise SourceRecordError(source, "data_zone must be raw or trusted or snapshot")
+
+    before_evaluation_failure = (
+        document["status"] == "FAILED"
+        and not document["rule_results"]
+        and document["rules_total"] == 0
+        and document["rules_passed"] == 0
+        and document["rules_failed"] == 0
+        and bool(document["execution_errors"])
+    )
+    if has_data_zone and not (
+        document["data_zone"] == "snapshot"
+        and before_evaluation_failure and document["data_path"] is None
+    ):
         require_nonempty_text(document, "data_path", source)
-        if document["data_zone"] not in {"raw", "trusted"}:
-            raise SourceRecordError(source, "data_zone must be raw or trusted")
+
+    cutoff = document.get("snapshot_cutoff")
+    if document.get("data_zone") == "snapshot":
+        if cutoff is None:
+            if not before_evaluation_failure:
+                raise SourceRecordError(source, "snapshot requires a valid snapshot_cutoff")
+        else:
+            if not isinstance(cutoff, str) or not re.fullmatch(r"[0-9]{4}-[0-9]{2}-[0-9]{2}", cutoff):
+                raise SourceRecordError(source, "snapshot_cutoff must use ISO YYYY-MM-DD")
+            try:
+                date.fromisoformat(cutoff)
+            except ValueError as exc:
+                raise SourceRecordError(source, "snapshot_cutoff must be a real date") from exc
+    elif cutoff is not None:
+        raise SourceRecordError(source, "snapshot_cutoff must be null or absent outside snapshot")
 
     validated_results = [
         validate_rule_result(rule, source, index)
@@ -228,7 +257,8 @@ def create_schema(connection: duckdb.DuckDBPyConnection) -> None:
             execution_error_count BIGINT NOT NULL,
             source_record VARCHAR NOT NULL,
             data_zone VARCHAR,
-            data_path VARCHAR
+            data_path VARCHAR,
+            snapshot_cutoff DATE
         )
         """
     )
@@ -269,7 +299,7 @@ def populate_database(
                     ?,
                     CAST(? AS TIMESTAMPTZ) AT TIME ZONE 'UTC',
                     CAST(? AS TIMESTAMPTZ) AT TIME ZONE 'UTC',
-                    ?, ?, ?, ?, ?, ?, ?, ?, ?
+                    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
                 )
                 """,
                 [
@@ -285,6 +315,7 @@ def populate_database(
                     source_record,
                     record.get("data_zone"),
                     record.get("data_path"),
+                    record.get("snapshot_cutoff"),
                 ],
             )
             for rule in record["rule_results"]:
