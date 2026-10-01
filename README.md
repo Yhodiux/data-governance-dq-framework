@@ -78,6 +78,18 @@ The output is `data/results/observability/dq_history.duckdb`, containing `dq_run
 
 This is execution history, not a global DQ score or proof of improvement or deterioration. Repeated runs over unchanged RAW may naturally contain identical results.
 
+## Policy-driven standardization and TRUSTED
+
+Step 5 builds a complete TRUSTED dataset from RAW using only explicitly declared policies:
+
+```bash
+python -m src.standardization
+```
+
+The initial portfolio contains one policy, `CARD-STD-001`, which standardizes only exact `card.issued` values shaped as `YYMMDD 00:00:00` to the documented six-digit representation. The seven unaffected assets are copied byte-for-byte. Publication is all-or-nothing and each run writes transformation evidence under `data/results/standardization/`.
+
+TRUSTED is not claimed to be fully clean or DQ compliant. The whitespace findings and `trans.type = VYBER` remain unchanged, and DQ is not automatically rerun after standardization.
+
 In this project:
 
 - **SOURCE** means the original external dataset, unchanged and outside version control.
@@ -87,7 +99,9 @@ In this project:
 - **DQ RULES** contain explicit executable expectations with traceable evidence.
 - **DQ RESULTS** contain observed outcomes for those expectations.
 - **DQ OBSERVABILITY** is a reproducible analytical projection of DQ execution records.
-- **GOVERNANCE DECISIONS**, **TRUSTED**, completeness rules, and DQ scoring are not implemented yet.
+- **STANDARDIZATION POLICIES** authorize only explicitly declared transformations.
+- **TRUSTED** contains the complete policy-standardized publication without claiming universal DQ compliance.
+- **OWNERSHIP/STEWARDSHIP**, completeness rules, DQ scoring, and post-standardization revalidation are not implemented yet.
 
 ## Planned capabilities
 
@@ -104,6 +118,6 @@ These capabilities are planned and have not yet been implemented.
 
 ## Current status
 
-**Step 4 - Local DQ Observability and Run History.** The source baseline, local ingestion, physical profiling, source-driven catalog, metadata-driven DQ execution, and reproducible DuckDB run history are implemented. Completeness, scoring, lineage processing, governance decisions, trusted-layer transformations, replay, dashboards, and cloud components have not been implemented.
+**Step 5 - Policy-Driven Standardization and TRUSTED.** The source baseline, local ingestion, physical profiling, catalog, metadata-driven DQ, run history, and one explicitly authorized standardization policy are implemented. Completeness, scoring, post-standardization DQ revalidation, broader governance decisions, replay, dashboards, and cloud components have not been implemented.
 
-See [`docs/source/dataset_assessment.md`](docs/source/dataset_assessment.md) for the source baseline, [`config/dataset_manifest.yaml`](config/dataset_manifest.yaml) for expected files, [`docs/architecture/local_ingestion.md`](docs/architecture/local_ingestion.md) for ingestion, [`docs/architecture/local_profiling.md`](docs/architecture/local_profiling.md) for profiling, [`docs/architecture/metadata_catalog.md`](docs/architecture/metadata_catalog.md) for the catalog, [`docs/architecture/data_quality.md`](docs/architecture/data_quality.md) for rule semantics, and [`docs/architecture/dq_observability.md`](docs/architecture/dq_observability.md) for run history.
+See [`docs/source/dataset_assessment.md`](docs/source/dataset_assessment.md) for the source baseline, [`config/dataset_manifest.yaml`](config/dataset_manifest.yaml) for expected files, [`docs/architecture/local_ingestion.md`](docs/architecture/local_ingestion.md) for ingestion, [`docs/architecture/local_profiling.md`](docs/architecture/local_profiling.md) for profiling, [`docs/architecture/metadata_catalog.md`](docs/architecture/metadata_catalog.md) for the catalog, [`docs/architecture/data_quality.md`](docs/architecture/data_quality.md) for DQ semantics, [`docs/architecture/dq_observability.md`](docs/architecture/dq_observability.md) for history, and [`docs/architecture/standardization_trusted.md`](docs/architecture/standardization_trusted.md) for TRUSTED publication.

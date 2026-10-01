@@ -8,6 +8,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Step 5 policy-driven standardization engine and complete local TRUSTED publication.
+- `CARD-STD-001` for strict full-match normalization of documented `card.issued` representation.
+- Generic `regex_replace` policy operator, policy validation, transformation evidence, and atomic directory publication.
+- Focused tests for authorization boundaries, physical preservation, failure recovery, and idempotent rebuilds.
 - Step 4 local DQ observability builder and reproducible DuckDB execution history.
 - `dq_runs` and `dq_rule_results` analytical tables sourced exclusively from DQ JSON evidence.
 - Strict source-record validation, deterministic full rebuild, and atomic database publication.

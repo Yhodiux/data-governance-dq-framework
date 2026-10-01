@@ -1,0 +1,15 @@
+policies:
+  - id: CARD-STD-001
+    asset: card
+    column: issued
+    transformation:
+      type: regex_replace
+      pattern: '^(\d{6}) 00:00:00$'
+      replacement: '\1'
+    evidence:
+      type: catalog
+      reference: card.issued
+      description: >-
+        Standardize the observed physical representation to the documented
+        YYMMDD representation.
+
