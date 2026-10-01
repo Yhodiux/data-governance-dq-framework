@@ -1,0 +1,33 @@
+assets:
+  account:
+    strategy: temporal
+    temporal: {column: date, format: YYMMDD, century: 1900}
+  disp:
+    strategy: reference
+    references:
+      - {column: account_id, asset: account, target_column: account_id, relationship: disposition_to_account}
+  client:
+    strategy: reference
+    references:
+      - {column: client_id, asset: disp, target_column: client_id, relationship: disposition_to_client}
+  order:
+    strategy: reference
+    references:
+      - {column: account_id, asset: account, target_column: account_id, relationship: permanent_order_to_account}
+  trans:
+    strategy: temporal_and_reference
+    temporal: {column: date, format: YYMMDD, century: 1900}
+    references:
+      - {column: account_id, asset: account, target_column: account_id, relationship: transaction_to_account}
+  loan:
+    strategy: temporal_and_reference
+    temporal: {column: date, format: YYMMDD, century: 1900}
+    references:
+      - {column: account_id, asset: account, target_column: account_id, relationship: loan_to_account}
+  card:
+    strategy: temporal_and_reference
+    temporal: {column: issued, format: YYMMDD, century: 1900}
+    references:
+      - {column: disp_id, asset: disp, target_column: disp_id, relationship: credit_card_to_disposition}
+  district:
+    strategy: static

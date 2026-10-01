@@ -8,6 +8,7 @@
 !/data/raw/.gitkeep
 /data/trusted/*
 !/data/trusted/.gitkeep
+/data/snapshots/
 /data/results/*
 !/data/results/.gitkeep
 

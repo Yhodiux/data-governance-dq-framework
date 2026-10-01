@@ -64,7 +64,7 @@ Run from the repository root:
 python -m src.dq
 ```
 
-Each run writes a JSON result to `data/results/dq/`. A successful engine execution may contain failed rules when violations are observed. Empty-string handling is explicit per rule through `empty_policy`; completeness, thresholds, global scoring, remediation, and TRUSTED output are not implemented.
+Each run writes a JSON result to `data/results/dq/`. A successful engine execution may contain failed rules when violations are observed. Empty-string handling is explicit per rule through `empty_policy`; completeness, thresholds, global scoring, and remediation are not implemented. TRUSTED is produced separately by standardization.
 
 RAW remains the default input. Revalidate the same rules against the separately produced TRUSTED dataset with:
 
@@ -109,7 +109,8 @@ In this project:
 - **DQ OBSERVABILITY** is a reproducible analytical projection of DQ execution records.
 - **STANDARDIZATION POLICIES** authorize only explicitly declared transformations.
 - **TRUSTED** contains the complete policy-standardized publication without claiming universal DQ compliance.
-- **OWNERSHIP/STEWARDSHIP**, completeness rules, DQ scoring, and post-standardization revalidation are not implemented yet.
+- **HISTORICAL SNAPSHOTS** select original TRUSTED rows by documented dates and relationships.
+- **OWNERSHIP/STEWARDSHIP**, completeness rules, and DQ scoring are not implemented yet.
 
 ## Planned capabilities
 
@@ -122,10 +123,27 @@ The project is expected to add these capabilities incrementally:
 - lineage and traceability; and
 - reporting or dashboard views over results.
 
-These capabilities are planned and have not yet been implemented.
+Profiling, cataloging, DQ validation, execution traceability, policy-driven standardization and TRUSTED publication, post-standardization DQ revalidation, and historical snapshot replay are implemented. Scoring and reporting/dashboard views remain planned.
+
+## Historical snapshots
+
+Step 6A selects original TRUSTED rows using metadata-declared temporal, reference,
+combined, and static strategies:
+
+```bash
+python -m src.replay --cutoff 1993-12-31
+```
+
+The cutoff is inclusive. Each build publishes all eight assets under
+`data/snapshots/<YYYY-MM-DD>/` and records execution evidence in
+`data/results/replay/`. Invalid dates or required orphan references fail the build;
+a failed rebuild preserves the previous snapshot. Replay preserves original rows
+without cleaning or transforming values. Assets without documented validity are
+selected by relationships or copied fully; this is not a complete reconstruction
+of historical knowledge. See [historical replay architecture](docs/architecture/historical_replay.md).
 
 ## Current status
 
-**Step 5B - Post-Standardization DQ Revalidation.** The same metadata-driven DQ engine can validate RAW or TRUSTED explicitly, and observability preserves zone-aware and legacy execution history. Completeness, scoring, broader governance decisions, replay, dashboards, and cloud components have not been implemented.
+**Step 6A - Historical Snapshot Builder.** Metadata-driven replay builds historical snapshots from TRUSTED. The same DQ engine can validate RAW or TRUSTED explicitly, and observability preserves zone-aware and legacy execution history. DQ on snapshots, temporal observability, completeness, scoring, broader governance decisions, dashboards, and cloud components have not been implemented.
 
 See [`docs/source/dataset_assessment.md`](docs/source/dataset_assessment.md) for the source baseline, [`config/dataset_manifest.yaml`](config/dataset_manifest.yaml) for expected files, [`docs/architecture/local_ingestion.md`](docs/architecture/local_ingestion.md) for ingestion, [`docs/architecture/local_profiling.md`](docs/architecture/local_profiling.md) for profiling, [`docs/architecture/metadata_catalog.md`](docs/architecture/metadata_catalog.md) for the catalog, [`docs/architecture/data_quality.md`](docs/architecture/data_quality.md) for DQ semantics, [`docs/architecture/dq_observability.md`](docs/architecture/dq_observability.md) for history, and [`docs/architecture/standardization_trusted.md`](docs/architecture/standardization_trusted.md) for TRUSTED publication.

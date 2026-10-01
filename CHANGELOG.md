@@ -8,6 +8,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Step 6A metadata-driven historical snapshots from read-only TRUSTED with inclusive ISO cutoffs.
+- Explicit YYMMDD century metadata, dependency resolution, and temporal/reference construction validation.
+- Physical row preservation, safe snapshot rebuilds, and replay execution evidence.
+- Synthetic replay tests and historical replay architecture documentation.
 - Step 5B explicit RAW/TRUSTED selection for the existing DQ engine without changing rule semantics.
 - `data_zone` and resolved `data_path` metadata in new DQ execution records.
 - Backward-compatible zone-aware DQ observability history using nullable run columns.
