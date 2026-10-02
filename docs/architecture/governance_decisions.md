@@ -33,6 +33,20 @@ a transformation policy is not evidence of a preexisting historical decision.
 Actor and decision_date are NULL, without deriving them from Git or execution
 timestamps. Severity, owners and business impact are not invented.
 
+Three original generated JSON artifacts are intentionally retained in version
+control so a clean checkout contains the historical execution evidence supporting
+the versioned governance declarations:
+
+- `data/results/dq/20261001T013557.424850Z-48654f22.json`
+- `data/results/standardization/std-20261001T022159.952149Z-88fe0f44.json`
+- `data/results/dq/20261001T023050.406156Z-b6e62a52.json`
+
+Their contents and execution identities are preserved. Future executions produce
+independent evidence and do not replace these records; no latest/canonical-run
+semantics are implied. Absolute paths inside these records reflect the original
+execution environment and are intentionally preserved, not used as input paths
+for a new checkout. All other generated execution results remain gitignored.
+
 ## Projection and validation
 
 `governance_issues`: issue_id VARCHAR PK, asset VARCHAR, column_name VARCHAR,

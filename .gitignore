@@ -12,6 +12,15 @@
 /data/results/*
 !/data/results/.gitkeep
 
+# Immutable historical evidence supporting versioned governance declarations.
+!/data/results/dq/
+/data/results/dq/*
+!/data/results/dq/20261001T013557.424850Z-48654f22.json
+!/data/results/dq/20261001T023050.406156Z-b6e62a52.json
+!/data/results/standardization/
+/data/results/standardization/*
+!/data/results/standardization/std-20261001T022159.952149Z-88fe0f44.json
+
 # Python-generated local files.
 __pycache__/
 *.py[cod]

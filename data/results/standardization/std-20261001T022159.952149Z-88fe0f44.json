@@ -1,0 +1,48 @@
+{
+  "run_id": "std-20261001T022159.952149Z-88fe0f44",
+  "started_at": "2026-10-01T02:21:59.952191Z",
+  "completed_at": "2026-10-01T02:22:00.194488Z",
+  "elapsed_seconds": 0.24236,
+  "status": "SUCCESS",
+  "policies_total": 1,
+  "policies_applied": 1,
+  "assets_total": 8,
+  "assets_copied": 7,
+  "assets_transformed": 1,
+  "errors": [],
+  "policy_results": [
+    {
+      "policy_id": "CARD-STD-001",
+      "asset": "card",
+      "column": "issued",
+      "transformation_type": "regex_replace",
+      "rows_total": 892,
+      "rows_evaluated": 892,
+      "rows_changed": 892,
+      "rows_unchanged": 0,
+      "sample_changes": [
+        {
+          "before": "931107 00:00:00",
+          "after": "931107"
+        },
+        {
+          "before": "940119 00:00:00",
+          "after": "940119"
+        },
+        {
+          "before": "940205 00:00:00",
+          "after": "940205"
+        },
+        {
+          "before": "940208 00:00:00",
+          "after": "940208"
+        },
+        {
+          "before": "940215 00:00:00",
+          "after": "940215"
+        }
+      ]
+    }
+  ],
+  "trusted_path": "F:\\Proyectos\\Gatoksy\\TECNOLOGIA\\Dyao\\projects\\solutions\\data-engineering\\data-governance-dq-framework\\data\\trusted"
+}
