@@ -136,7 +136,7 @@ The project is expected to add these capabilities incrementally:
 - lineage and traceability; and
 - reporting or dashboard views over results.
 
-Profiling, cataloging, DQ validation, execution records and DQ history, policy-driven standardization and TRUSTED publication, post-standardization DQ revalidation, historical snapshot replay, snapshot DQ revalidation, structural lineage, and execution traceability are implemented. Scoring and reporting/dashboard views remain planned.
+Profiling, cataloging, DQ validation, execution records and DQ history, policy-driven standardization and TRUSTED publication, post-standardization DQ revalidation, historical snapshot replay, snapshot DQ revalidation, structural lineage, execution traceability, the reporting layer, and the Power BI dashboard are implemented. Global DQ scoring remains planned.
 
 ## Historical snapshots
 
@@ -167,10 +167,32 @@ The output is `data/results/lineage/lineage.duckdb`, containing only `lineage_no
 
 ## Current status
 
-**Step 11A - Power BI Reporting Layer.** Run `python -m src.reporting` to publish exactly eight typed Parquet datasets under `data/results/reporting/` from read-only Metrics, Governance, Execution Traceability and Structural Lineage databases. The reporting model retains denominators, all run identities and snapshot cutoffs for Governance Overview, Data Quality, and Historical & Traceability. See [reporting architecture](docs/architecture/reporting_layer.md) for schemas, relationships, publication and refresh boundaries. The Power BI dashboard itself remains planned.
+**Step 11B - Power BI Dashboard.** The manually completed dashboard presents governance, DQ results, temporal observability and recorded execution facts in four pages. See the screenshots and semantics below.
+
+**Step 11A - Power BI Reporting Layer.** Run `python -m src.reporting` to publish exactly eight typed Parquet datasets under `data/results/reporting/` from read-only Metrics, Governance, Execution Traceability and Structural Lineage databases. The reporting model retains denominators, all run identities and snapshot cutoffs. See [reporting architecture](docs/architecture/reporting_layer.md) for schemas, relationships, publication and refresh boundaries.
 
 **Step 10 - Governance Issues & Decisions.** Run `python -m src.governance` to validate version-controlled issue/decision declarations and rebuild `data/results/governance/governance_registry.duckdb`. Four issues and four explicit decisions reference existing metadata and original execution evidence. Withholding remediation is declared in Step 10; it is never inferred from missing transformations. Actor and decision date remain NULL, and execution runs are not connected through inferred causal dependencies. See [governance decisions](docs/architecture/governance_decisions.md).
 
-Step 9 temporal DQ observability remains available through four snapshot views in the existing metrics database, preserving denominators and independent run IDs without automatic temporal classifications. See [temporal observability](docs/architecture/temporal_observability.md), [DQ metrics architecture](docs/architecture/data_quality_metrics.md), and [execution traceability architecture](docs/architecture/execution_traceability.md). Completeness, global scoring, dashboards, and cloud components remain planned.
+Step 9 temporal DQ observability remains available through four snapshot views in the existing metrics database, preserving denominators and independent run IDs without automatic temporal classifications. See [temporal observability](docs/architecture/temporal_observability.md), [DQ metrics architecture](docs/architecture/data_quality_metrics.md), and [execution traceability architecture](docs/architecture/execution_traceability.md). Completeness, global scoring, and cloud components remain planned.
+
+## Power BI Dashboard
+
+Step 11B is available in [data-governance-dq-dashboard.pbix](dashboards/data-governance-dq-dashboard.pbix). Power BI consumes the existing reporting results; it does not rebuild the framework's DQ or governance logic.
+
+**Data Governance Overview** shows assets, DQ rules, governance issues, open/resolved counts, rules by dimension, issue states and issue detail.
+
+![Data Governance Overview](docs/screenshots/01-governance-overview.png)
+
+**Data Quality** shows evaluation counts and passed/failed records, weighted compliance, row-rule evaluations, failures by dimension/asset and evaluation detail. Failed Evaluations counts failed evaluation records, not failed rules or bad rows. Row-Rule Evaluations counts evaluated row-rule pairs. Weighted Compliance is total conforming row-rule evaluations divided by total evaluated row-rule evaluations, not a simple average of compliance ratios or a global score.
+
+![Data Quality](docs/screenshots/02-data-quality.png)
+
+**Temporal Observability** shows compliance by snapshot and rule alongside snapshot evaluation history. `snapshot_cutoff` is the business/historical cutoff, distinct from execution time. Changing snapshot populations do not imply automatic quality improvement/degradation; no automatic trend labels are assigned.
+
+![Temporal Observability](docs/screenshots/03-temporal-observability.png)
+
+**Execution Traceability** shows the 18 recorded execution runs, counts by process type and run history. These are recorded execution facts; the dashboard does not infer causal relationships between runs.
+
+![Execution Traceability](docs/screenshots/04-execution-traceability.png)
 
 See [`docs/source/dataset_assessment.md`](docs/source/dataset_assessment.md) for the source baseline, [`config/dataset_manifest.yaml`](config/dataset_manifest.yaml) for expected files, [`docs/architecture/local_ingestion.md`](docs/architecture/local_ingestion.md) for ingestion, [`docs/architecture/local_profiling.md`](docs/architecture/local_profiling.md) for profiling, [`docs/architecture/metadata_catalog.md`](docs/architecture/metadata_catalog.md) for the catalog, [`docs/architecture/data_quality.md`](docs/architecture/data_quality.md) for DQ semantics, [`docs/architecture/dq_observability.md`](docs/architecture/dq_observability.md) for history, and [`docs/architecture/standardization_trusted.md`](docs/architecture/standardization_trusted.md) for TRUSTED publication.

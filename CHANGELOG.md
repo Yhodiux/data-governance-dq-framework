@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Step 11B completed Power BI dashboard with Data Governance Overview, Data Quality, Temporal Observability and Execution Traceability pages.
+- Dashboard screenshots and interpretation guidance for evaluation counts, row-rule denominators, weighted compliance, historical cutoffs and independent execution facts.
 - Step 11A read-only Power BI reporting builder publishing eight typed Parquet datasets from existing result databases.
 - Stable schemas, exact counters, grain/FK checks, deterministic logical exports and failure-safe whole-directory publication.
 - Focused synthetic reporting tests and a documented three-page Power BI model with unidirectional relationships and preserved denominators.

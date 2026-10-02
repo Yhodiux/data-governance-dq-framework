@@ -91,17 +91,25 @@ policy enrichment describes declared structural scope, not execution causality.
 Current Rules is a declared inventory, not a historical version dimension.
 Recorded dimension/operator/empty-policy context stays in DQ Evaluations.
 
-## Exactly three dashboard pages
+## Completed dashboard pages (Step 11B)
 
-1. **Governance Overview:** Assets and Rules inventories; Issues by status;
+1. **Data Governance Overview:** Assets and Rules inventories; Issues by status;
    Decisions, rationale and associated policy. Count catalog assets separately
    from assets with DQ rules. Unknown actor/date stay blank.
 2. **Data Quality:** Evaluations sliced by asset, rule, dimension and status,
    showing rows_evaluated and violations alongside compliance. Summaries provide
    complete-rule-set totals per run/asset/dimension with an explicit level filter.
-3. **Historical & Traceability:** filter DQ datasets to data_zone=snapshot;
-   retain snapshot_cutoff and run_id for rule/asset/dimension series. Runs and
-   Details show independent execution facts, process status and evidence paths.
+3. **Temporal Observability:** filter DQ datasets to data_zone=snapshot;
+   retain snapshot_cutoff and run_id for rule/asset/dimension series and snapshot
+   evaluation history.
+4. **Execution Traceability:** Runs and Details show independent execution facts,
+   process counts and run history, without inferred causal relationships.
+
+Step 11B separates the originally proposed Historical & Traceability page into
+two pages using the same eight reporting datasets. The manually completed PBIX
+is in `dashboards/data-governance-dq-dashboard.pbix`; screenshots and dashboard
+semantics are documented in the [README](../../README.md#power-bi-dashboard).
+Failed Evaluations counts failed evaluation records, not failed rules or bad rows.
 
 Counts and per-evaluation ratios are already materialized. Power BI may calculate
 inventory/status counts and ratios of summed conforming_evaluations to summed
