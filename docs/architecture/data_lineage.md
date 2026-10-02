@@ -9,7 +9,8 @@ python -m src.lineage
 The builder publishes `data/results/lineage/lineage.duckdb`. It projects the
 current structural contract: an edge means that declared metadata and/or an
 explicit framework contract supports that relationship. It does not assert that
-a particular execution occurred. Step 7B execution traceability remains pending.
+a particular execution occurred. Step 7B provides a separate
+[execution traceability projection](execution_traceability.md) of recorded facts.
 
 ## Authoritative inputs and contract adapters
 

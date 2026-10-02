@@ -1,10 +1,49 @@
 # Data Governance & Data Quality Framework
 
-Metadata-driven Data Governance and Data Quality framework for profiling, cataloging, validating, scoring and tracing relational banking data.
+Metadata-driven Data Governance and Data Quality framework with auditable decisions, execution evidence and Power BI reporting over relational banking data.
+
+![Data Governance framework](docs/images/architecture/data-governance-framework.png)
 
 ## Purpose
 
-This portfolio project will build a small, executable framework that demonstrates practical Data Governance and Data Quality capabilities over relational banking data. It is not merely a theoretical governance exercise: planned governance metadata will be connected incrementally to executable data processing, validation, measurement, and traceability capabilities.
+This executable portfolio project makes data quality findings, authorized transformations and governance decisions inspectable and reproducible. Versioned metadata connects source definitions and declarative expectations to measured results, retained historical evidence and reporting.
+
+The flow is **SOURCE → RAW → TRUSTED → historical snapshots → governance/observability → reporting**. DQ detects; Governance decides. TRUSTED means standardized according to approved policies, not automatically error-free.
+
+Portfolio v1.0 includes the metadata catalog, declarative DQ rules, standardization policies, governance issues and decisions, immutable historical evidence, structural lineage, execution traceability, temporal DQ observability, eight reporting datasets and a four-page Power BI dashboard. Structural lineage describes declared relationships; execution traceability reports recorded facts. No causal relationships between runs or latest/canonical-run semantics are inferred.
+
+## End-to-end demo
+
+Supply the external, gitignored Berka source separately. Install dependencies
+with `python -m pip install -r requirements.txt`, then run from the repository root:
+
+```bash
+python -m src.demo --source berka-source/berka-dataset
+```
+
+The wrapper uses the current Python interpreter and existing CLI modules. It
+checks required source files, metadata/configuration and the three retained
+historical governance evidence files before ingestion. Existing stages remain
+responsible for checksum checks and semantic validation.
+
+The sequence is ingestion, profiling, catalog, RAW DQ, standardization/TRUSTED
+publication, TRUSTED DQ, replay immediately followed by snapshot DQ for each
+December 31 cutoff from 1993 through 1998, lineage, execution traceability, DQ
+observability, metrics/temporal observability, governance and reporting. It stops
+on the first non-zero CLI exit code and reports overall SUCCESS only after
+reporting completes.
+
+The command creates additional execution history without deleting or resetting
+existing records. Rule-level DQ failures are expected findings and do not mean
+the engine failed: the wrapper respects the existing CLI execution status.
+Retained historical governance evidence is unchanged; new runs are independent,
+without latest/canonical selection or inferred causal relationships.
+
+Successful publication rebuilds RAW, TRUSTED, the six snapshots and the derived
+result layers using their existing publication contracts. Reporting produces
+the eight Parquet files consumed by Power BI; the PBIX is not launched
+automatically. Refresh Power BI after the command reports SUCCESS. SOURCE remains
+external and gitignored; execution counts grow with repeated demos.
 
 ## Initial dataset
 
@@ -16,7 +55,7 @@ The original source files are immutable project inputs. They are kept separate f
 
 Step 1A provides a manifest-driven local ingestion command. It verifies the existence, SHA-256 checksum, and physical record count of every expected source file before publishing byte-identical copies to `data/raw/`. These are source-integrity checks, not business Data Quality rules.
 
-Install the only runtime dependency:
+Install the runtime dependencies (PyYAML and DuckDB):
 
 ```bash
 python -m pip install -r requirements.txt
@@ -44,7 +83,7 @@ Use `python -m src.profiling --raw <path>` only when profiling another controlle
 
 ## Metadata catalog
 
-Step 2 provides version-controlled YAML definitions for all manifest-declared assets, their documented columns and values, and source-supported relationships. Every definition identifies its source-documentation evidence; profiling measurements and future governance decisions remain separate.
+Step 2 provides version-controlled YAML definitions for all manifest-declared assets, their documented columns and values, and source-supported relationships. Every definition identifies its source-documentation evidence; profiling measurements and governance decisions remain separate.
 
 Validate catalog structure and RAW-header consistency from the repository root:
 
@@ -125,18 +164,14 @@ In this project:
 - **HISTORICAL SNAPSHOTS** select original TRUSTED rows by documented dates and relationships.
 - **OWNERSHIP/STEWARDSHIP**, completeness rules, and DQ scoring are not implemented yet.
 
-## Planned capabilities
+## Scope and limitations
 
-The project is expected to add these capabilities incrementally:
-
-- metadata-driven data profiling;
-- data cataloging and governance metadata;
-- configurable Data Quality validation;
-- Data Quality scoring;
-- lineage and traceability; and
-- reporting or dashboard views over results.
-
-Profiling, cataloging, DQ validation, execution records and DQ history, policy-driven standardization and TRUSTED publication, post-standardization DQ revalidation, historical snapshot replay, snapshot DQ revalidation, structural lineage, execution traceability, the reporting layer, and the Power BI dashboard are implemented. Global DQ scoring remains planned.
+The implemented framework covers profiling, cataloging, DQ validation and history,
+policy-driven TRUSTED publication, post-standardization and snapshot DQ,
+historical replay, structural lineage, execution traceability, governance
+issues/decisions, reporting and Power BI. Completeness, ownership/stewardship,
+global DQ scoring and cloud orchestration are outside the implemented v1.0 scope.
+No global DQ score is invented.
 
 ## Historical snapshots
 
@@ -165,7 +200,7 @@ python -m src.lineage
 
 The output is `data/results/lineage/lineage.duckdb`, containing only `lineage_nodes` and `lineage_edges`. It describes asset flows, authorized column transformations with policy context, DQ applicability, and documented logical relationships. The builder reads metadata and source contracts without reading datasets or execution history. SNAPSHOT has no cutoff or instance identity in this graph. Builds replace the projection atomically and retain deterministic logical IDs. See [data lineage architecture](docs/architecture/data_lineage.md) for the model, evidence, limitations, and acceptance SQL.
 
-## Current status
+## Portfolio v1.0 status
 
 **Step 12 - End-to-End Demo.** A thin CLI wrapper runs the existing stages through reporting; see the command and prerequisites below.
 
@@ -175,40 +210,7 @@ The output is `data/results/lineage/lineage.duckdb`, containing only `lineage_no
 
 **Step 10 - Governance Issues & Decisions.** Run `python -m src.governance` to validate version-controlled issue/decision declarations and rebuild `data/results/governance/governance_registry.duckdb`. Four issues and four explicit decisions reference existing metadata and original execution evidence. Withholding remediation is declared in Step 10; it is never inferred from missing transformations. Actor and decision date remain NULL, and execution runs are not connected through inferred causal dependencies. See [governance decisions](docs/architecture/governance_decisions.md).
 
-Step 9 temporal DQ observability remains available through four snapshot views in the existing metrics database, preserving denominators and independent run IDs without automatic temporal classifications. See [temporal observability](docs/architecture/temporal_observability.md), [DQ metrics architecture](docs/architecture/data_quality_metrics.md), and [execution traceability architecture](docs/architecture/execution_traceability.md). Completeness, global scoring, and cloud components remain planned.
-
-## End-to-end demo
-
-With the external Berka source available and `requirements.txt` installed, run
-from the repository root:
-
-```bash
-python -m src.demo --source berka-source/berka-dataset
-```
-
-The wrapper uses the current Python interpreter and existing CLI modules. It
-checks required source files, metadata/configuration and the three retained
-historical governance evidence files before ingestion. Existing stages remain
-responsible for checksum checks and semantic validation.
-
-The sequence is ingestion, profiling, catalog, RAW DQ, standardization/TRUSTED
-publication, TRUSTED DQ, replay immediately followed by snapshot DQ for each
-December 31 cutoff from 1993 through 1998, lineage, execution traceability, DQ
-observability, metrics/temporal observability, governance and reporting. It stops
-on the first non-zero CLI exit code and reports overall SUCCESS only after
-reporting completes.
-
-The command creates additional execution history without deleting or resetting
-existing records. Rule-level DQ failures are expected findings and do not mean
-the engine failed: the wrapper respects the existing CLI execution status.
-Retained historical governance evidence is unchanged; new runs are independent,
-without latest/canonical selection or inferred causal relationships.
-
-Successful publication rebuilds RAW, TRUSTED, the six snapshots and the derived
-result layers using their existing publication contracts. Reporting produces
-the eight Parquet files consumed by Power BI; the PBIX is not launched
-automatically. Refresh Power BI after the command reports SUCCESS. SOURCE remains
-external and gitignored; execution counts grow with repeated demos.
+Step 9 temporal DQ observability remains available through four snapshot views in the existing metrics database, preserving denominators and independent run IDs without automatic temporal classifications. See [temporal observability](docs/architecture/temporal_observability.md), [DQ metrics architecture](docs/architecture/data_quality_metrics.md), and [execution traceability architecture](docs/architecture/execution_traceability.md). Completeness, global scoring, and cloud components remain outside the v1.0 scope.
 
 ## Power BI Dashboard
 
@@ -216,18 +218,18 @@ Step 11B is available in [data-governance-dq-dashboard.pbix](dashboards/data-gov
 
 **Data Governance Overview** shows assets, DQ rules, governance issues, open/resolved counts, rules by dimension, issue states and issue detail.
 
-![Data Governance Overview](docs/screenshots/01-governance-overview.png)
+![Data Governance Overview](docs/images/screenshots/01-governance-overview.png)
 
 **Data Quality** shows evaluation counts and passed/failed records, weighted compliance, row-rule evaluations, failures by dimension/asset and evaluation detail. Failed Evaluations counts failed evaluation records, not failed rules or bad rows. Row-Rule Evaluations counts evaluated row-rule pairs. Weighted Compliance is total conforming row-rule evaluations divided by total evaluated row-rule evaluations, not a simple average of compliance ratios or a global score.
 
-![Data Quality](docs/screenshots/02-data-quality.png)
+![Data Quality](docs/images/screenshots/02-data-quality.png)
 
 **Temporal Observability** shows compliance by snapshot and rule alongside snapshot evaluation history. `snapshot_cutoff` is the business/historical cutoff, distinct from execution time. Changing snapshot populations do not imply automatic quality improvement/degradation; no automatic trend labels are assigned.
 
-![Temporal Observability](docs/screenshots/03-temporal-observability.png)
+![Temporal Observability](docs/images/screenshots/03-temporal-observability.png)
 
-**Execution Traceability** shows the 18 recorded execution runs, counts by process type and run history. These are recorded execution facts; the dashboard does not infer causal relationships between runs.
+**Execution Traceability** shows recorded execution runs, counts by process type and run history. These are recorded execution facts; the dashboard does not infer causal relationships between runs. Screenshots show the state at capture time; execution counts grow when the demo is repeated.
 
-![Execution Traceability](docs/screenshots/04-execution-traceability.png)
+![Execution Traceability](docs/images/screenshots/04-execution-traceability.png)
 
 See [`docs/source/dataset_assessment.md`](docs/source/dataset_assessment.md) for the source baseline, [`config/dataset_manifest.yaml`](config/dataset_manifest.yaml) for expected files, [`docs/architecture/local_ingestion.md`](docs/architecture/local_ingestion.md) for ingestion, [`docs/architecture/local_profiling.md`](docs/architecture/local_profiling.md) for profiling, [`docs/architecture/metadata_catalog.md`](docs/architecture/metadata_catalog.md) for the catalog, [`docs/architecture/data_quality.md`](docs/architecture/data_quality.md) for DQ semantics, [`docs/architecture/dq_observability.md`](docs/architecture/dq_observability.md) for history, and [`docs/architecture/standardization_trusted.md`](docs/architecture/standardization_trusted.md) for TRUSTED publication.

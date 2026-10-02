@@ -8,6 +8,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Step 12 End-to-End Demo: one thin orchestration command using existing CLI modules, preflight checks, six replay/DQ pairs and fail-fast execution through reporting.
+- Step 13 Portfolio Closure: portfolio-ready v1.0 documentation with a prominent conceptual image, accessible demo instructions and corrected capability/status descriptions.
+
+### Changed
+
+- Organized conceptual visuals under `docs/images/architecture/` and four dashboard captures under `docs/images/screenshots/`; updated README links and capture-time interpretation.
+- Clarified the implemented scope and retained DQ/governance semantics, independent execution evidence and reporting denominators without expanding functionality.
+
+### Added (earlier steps)
+
 - Step 11B completed Power BI dashboard with Data Governance Overview, Data Quality, Temporal Observability and Execution Traceability pages.
 - Dashboard screenshots and interpretation guidance for evaluation counts, row-rule denominators, weighted compliance, historical cutoffs and independent execution facts.
 - Step 11A read-only Power BI reporting builder publishing eight typed Parquet datasets from existing result databases.
