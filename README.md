@@ -167,6 +167,8 @@ The output is `data/results/lineage/lineage.duckdb`, containing only `lineage_no
 
 ## Current status
 
+**Step 12 - End-to-End Demo.** A thin CLI wrapper runs the existing stages through reporting; see the command and prerequisites below.
+
 **Step 11B - Power BI Dashboard.** The manually completed dashboard presents governance, DQ results, temporal observability and recorded execution facts in four pages. See the screenshots and semantics below.
 
 **Step 11A - Power BI Reporting Layer.** Run `python -m src.reporting` to publish exactly eight typed Parquet datasets under `data/results/reporting/` from read-only Metrics, Governance, Execution Traceability and Structural Lineage databases. The reporting model retains denominators, all run identities and snapshot cutoffs. See [reporting architecture](docs/architecture/reporting_layer.md) for schemas, relationships, publication and refresh boundaries.
@@ -174,6 +176,39 @@ The output is `data/results/lineage/lineage.duckdb`, containing only `lineage_no
 **Step 10 - Governance Issues & Decisions.** Run `python -m src.governance` to validate version-controlled issue/decision declarations and rebuild `data/results/governance/governance_registry.duckdb`. Four issues and four explicit decisions reference existing metadata and original execution evidence. Withholding remediation is declared in Step 10; it is never inferred from missing transformations. Actor and decision date remain NULL, and execution runs are not connected through inferred causal dependencies. See [governance decisions](docs/architecture/governance_decisions.md).
 
 Step 9 temporal DQ observability remains available through four snapshot views in the existing metrics database, preserving denominators and independent run IDs without automatic temporal classifications. See [temporal observability](docs/architecture/temporal_observability.md), [DQ metrics architecture](docs/architecture/data_quality_metrics.md), and [execution traceability architecture](docs/architecture/execution_traceability.md). Completeness, global scoring, and cloud components remain planned.
+
+## End-to-end demo
+
+With the external Berka source available and `requirements.txt` installed, run
+from the repository root:
+
+```bash
+python -m src.demo --source berka-source/berka-dataset
+```
+
+The wrapper uses the current Python interpreter and existing CLI modules. It
+checks required source files, metadata/configuration and the three retained
+historical governance evidence files before ingestion. Existing stages remain
+responsible for checksum checks and semantic validation.
+
+The sequence is ingestion, profiling, catalog, RAW DQ, standardization/TRUSTED
+publication, TRUSTED DQ, replay immediately followed by snapshot DQ for each
+December 31 cutoff from 1993 through 1998, lineage, execution traceability, DQ
+observability, metrics/temporal observability, governance and reporting. It stops
+on the first non-zero CLI exit code and reports overall SUCCESS only after
+reporting completes.
+
+The command creates additional execution history without deleting or resetting
+existing records. Rule-level DQ failures are expected findings and do not mean
+the engine failed: the wrapper respects the existing CLI execution status.
+Retained historical governance evidence is unchanged; new runs are independent,
+without latest/canonical selection or inferred causal relationships.
+
+Successful publication rebuilds RAW, TRUSTED, the six snapshots and the derived
+result layers using their existing publication contracts. Reporting produces
+the eight Parquet files consumed by Power BI; the PBIX is not launched
+automatically. Refresh Power BI after the command reports SUCCESS. SOURCE remains
+external and gitignored; execution counts grow with repeated demos.
 
 ## Power BI Dashboard
 
